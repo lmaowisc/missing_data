@@ -1,0 +1,47 @@
+{
+  "title": "Missing Data: Foundations and Methods",
+  "chapters": [
+    {
+      "number": 1,
+      "title": "Introduction",
+      "description": "Missingness mechanisms, identifiability, and the questions that come before choosing a method.",
+      "source": "manuscript/chapter-1.md"
+    },
+    {
+      "number": 2,
+      "title": "The EM algorithm",
+      "description": "Build likelihood-based inference from the complete-data problem, one conditional expectation at a time.",
+      "source": "manuscript/chapter-2.md"
+    },
+    {
+      "number": 3,
+      "title": "Regression with missing covariates",
+      "description": "Apply maximum likelihood and the method of weights to incomplete regression data.",
+      "source": "manuscript/chapter-3.md"
+    },
+    {
+      "number": 4,
+      "title": "Advanced topics in EM",
+      "description": "Extend the algorithm to nonparametric estimation, information calculations, and conditional maximization.",
+      "source": "manuscript/chapter-4.md"
+    },
+    {
+      "number": 5,
+      "title": "Multiple imputation & Bayesian analysis",
+      "description": "Represent uncertainty about missing values through posterior distributions and repeated completed datasets.",
+      "source": "manuscript/chapter-5.md"
+    },
+    {
+      "number": 6,
+      "title": "The estimating equation approach",
+      "description": "Move from likelihoods to estimating equations, inverse probability weighting, and double robustness.",
+      "source": "manuscript/chapter-6.md"
+    },
+    {
+      "number": 7,
+      "title": "Conclusion",
+      "description": "Reconnect the assumptions, algorithms, and inferential ideas developed throughout the course.",
+      "source": "manuscript/chapter-7.md"
+    }
+  ]
+}
