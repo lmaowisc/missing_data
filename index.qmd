@@ -36,7 +36,7 @@ Originally taught in 2018, this course is intended for graduate students in stat
 
 ## A common thread
 
-Standard complete-data methods can be adapted to missing data. Beginning with missingness mechanisms and identifiability, we connect likelihood-based methods, including EM and imputation, with semiparametric methods based on weighting.
+Beginning with missingness mechanisms and identifiability, we connect likelihood-based methods, including EM and imputation, with semiparametric methods based on weighting.
 
 :::
 :::::
