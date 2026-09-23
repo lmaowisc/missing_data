@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1" name="viewport"/><title>The EM algorithm · Missing Data: Foundations and Methods</title><meta content="Lecture slides and chapter notes for Missing Data: Foundations and Methods, by Lu Mao." name="description"/><link href="style.css" rel="stylesheet"/><link href="favicon.svg" rel="icon" type="image/svg+xml"/><script defer="" src="math-config.js"></script><script defer="" src="vendor/tex-svg-full.js"></script><script defer="" src="comments.js"></script></head>
+<body data-chapter="2"><a class="skip" href="#main">Skip to content</a><header><a class="brand" href="index.html">Missing Data: <span>Foundations and Methods</span></a></header><div class="layout"><aside class="sidebar"><a class="overview" href="index.html">Course overview</a><p class="nav-label">CHAPTERS</p><nav aria-label="Chapters"><a class="chapter-link" href="chapter-1.html"><span>01</span>Introduction</a><a aria-current="page" class="chapter-link active" href="chapter-2.html"><span>02</span>The EM algorithm</a><a class="chapter-link" href="chapter-3.html"><span>03</span>Regression with missing covariates</a><a class="chapter-link" href="chapter-4.html"><span>04</span>Advanced topics in EM</a><a class="chapter-link" href="chapter-5.html"><span>05</span>Multiple imputation &amp; Bayesian analysis</a><a class="chapter-link" href="chapter-6.html"><span>06</span>The estimating equation approach</a><a class="chapter-link" href="chapter-7.html"><span>07</span>Conclusion</a></nav></aside><main id="main"><div class="eyebrow">CHAPTER 02</div><h1 class="chapter-title">The EM algorithm</h1><p class="lead">Build likelihood-based inference from the complete-data problem, one conditional expectation at a time.</p><div class="slide-bar"><div><strong>Lecture slides</strong><span>A companion to the chapter · PDF</span></div><a class="button" href="slides/chapter-2.pdf">Open slides ↗</a></div><details class="chapter-contents"><summary>Contents of this chapter</summary><nav aria-label="Chapter contents"><a href="#section-1">2.1 The EM construction</a><a href="#section-2">2.2 Allele frequencies from
+blood types</a><a href="#section-3">2.3 Finite normal mixtures</a><a href="#section-4">2.4 Why EM increases the
+likelihood</a><a href="#section-5">2.5 Observed
+information and the Louis identity</a><a href="#section-6">2.6 Standard errors for
+allele frequencies</a><a href="#section-7">2.7 Coarsening and exponential
+families</a><a href="#section-8">2.8 Grouped multinomial
+observations</a><a href="#section-9">2.9 Regression with missing
+covariates</a><a href="#section-10">2.10 Continuous covariates</a><a href="#section-11">2.11 Categorical covariates</a><a href="#section-12">2.12 Mixed continuous
+and categorical covariates</a><a href="#section-13">2.13 References</a></nav></details><article class="book-content"><h2 id="section-1">2.1 The EM construction</h2>
+<p>The EM algorithm replaces a difficult observed-data optimization by a
+sequence of complete-data calculations. The missing data may be
+literally unrecorded values or latent variables introduced to simplify a
+model. What matters is that the completed problem is easier and that its
+conditional distribution, given the observations and a current parameter
+value, can be evaluated.</p>
+<p>There are two different parameter roles in <span class="math inline" data-tex="Q(\theta\mid\theta^{(j)})">\(Q(\theta\mid\theta^{(j)})\)</span>. The argument
+<span class="math inline" data-tex="\theta">\(\theta\)</span> is varied in the M step,
+while <span class="math inline" data-tex="\theta^{(j)}">\(\theta^{(j)}\)</span> is held fixed in
+the distribution used to take expectations. Confusing those roles would
+turn the M step into a different operation. Deriving the complete-data
+score first is often useful, although an M step must still find a
+maximizer rather than an arbitrary score root.</p>
+<div class="math-passage"><p>The bivariate normal example in Chapter 1 illustrates the two
+operations that define EM. At iteration <span class="math inline" data-tex="j">\(j\)</span>, use the current parameter <span class="math inline" data-tex="\theta^{(j)}">\(\theta^{(j)}\)</span> to determine the conditional
+distribution of the missing values, and take the conditional expectation
+of the complete-data log likelihood: </p><div class="math-block"><span class="math display" data-tex="Q(\theta|\theta^{(j)}):=E\{l_n(D;\theta)|D_{\mathrm{obs}};\theta^{(j)}\},">\[Q(\theta|\theta^{(j)}):=E\{l_n(D;\theta)|D_{\mathrm{obs}};\theta^{(j)}\},\]</span></div><p>
+The resulting function retains the candidate argument <span class="math inline" data-tex="\theta">\(\theta\)</span>. The M step varies that argument
+while holding the conditional distribution from the E step fixed: </p><div class="math-block"><span class="math display" data-tex="\theta^{(j+1)}:=\arg\max_\theta Q(\theta\mid
+\theta^{(j)}).">\[\theta^{(j+1)}:=\arg\max_\theta Q(\theta\mid
+\theta^{(j)}).\]</span></div><p> Thus one distribution supplies the averaging and
+one optimization supplies the update. Keeping those two roles separate
+is the key to deriving an EM algorithm correctly.</p></div>
+<div class="math-passage"><p>It is often convenient to derive the complete-data score before
+calculating the E step. Write <span class="math inline" data-tex="\dot
+l(D;\theta)=\partial l(D;\theta)/\partial\theta">\(\dot
+l(D;\theta)=\partial l(D;\theta)/\partial\theta\)</span>. When
+differentiation and conditional expectation can be interchanged, </p><div class="math-block"><span class="math display" data-tex="\frac{\partial}{\partial\theta}Q(\theta|\theta^{(j)})=E\left\{\frac{\partial}{\partial\theta}l_n(D;\theta)\Big|D_{\mathrm{obs}};\theta^{(j)}\right\}=E\{\dot
+l_n(D;\theta)|D_{\mathrm{obs}};\theta^{(j)}\}.">\[\frac{\partial}{\partial\theta}Q(\theta|\theta^{(j)})=E\left\{\frac{\partial}{\partial\theta}l_n(D;\theta)\Big|D_{\mathrm{obs}};\theta^{(j)}\right\}=E\{\dot
+l_n(D;\theta)|D_{\mathrm{obs}};\theta^{(j)}\}.\]</span></div><p> an interior
+M-step solution satisfies the expected-score equation </p><div class="math-block"><span class="math display" data-tex="E\{\dot l_n(D;\theta)\mid
+D_{\mathrm{obs}};\theta^{(j)}\}=0.">\[E\{\dot l_n(D;\theta)\mid
+D_{\mathrm{obs}};\theta^{(j)}\}=0.\]</span></div><p> The score omits terms that
+do not depend on the candidate parameter, so its conditional expectation
+can be simpler to calculate than that of the full log likelihood. This
+simplification does not change the optimization requirement: a score
+root must still be checked to ensure that it gives the intended
+maximum.</p></div>
+<div class="math-passage"><p>The idea of computing <span class="math inline" data-tex="E\{\dot
+l_n(D;\theta)\mid D_{\mathrm{obs}};\theta^{(j)}\}">\(E\{\dot
+l_n(D;\theta)\mid D_{\mathrm{obs}};\theta^{(j)}\}\)</span> is to replace
+the unobserved terms in the full-data score function with the best
+estimates possible given the observed data and the current “guess” of
+the true parameter. When the data consist of <span class="math inline" data-tex="n">\(n\)</span> independent observations, the
+conditional score function is </p><div class="math-block"><span class="math display" data-tex="\sum_{i=1}^n\big\{R_i\dot
+l(Y_i;\theta)+(1-R_i)E[\dot l(Y_i;\theta)\mid
+R_i=0,Y_{\mathrm{obs},i};\theta^{(j)}]\big\},">\[\sum_{i=1}^n\big\{R_i\dot
+l(Y_i;\theta)+(1-R_i)E[\dot l(Y_i;\theta)\mid
+R_i=0,Y_{\mathrm{obs},i};\theta^{(j)}]\big\},\]</span></div><p> where <span class="math inline" data-tex="\dot l(Y;\theta)">\(\dot l(Y;\theta)\)</span> is the score function
+for a single observation <span class="math inline" data-tex="Y">\(Y\)</span>. When
+the missing mechanism is MAR, this previous display is </p><div class="math-block"><span class="math display" data-tex="\sum_{i=1}^n\big\{R_i\dot
+l(Y_i;\theta)+(1-R_i)E[\dot l(Y_i;\theta)\mid
+Y_{\mathrm{obs},i};\theta^{(j)}]\big\}.">\[\sum_{i=1}^n\big\{R_i\dot
+l(Y_i;\theta)+(1-R_i)E[\dot l(Y_i;\theta)\mid
+Y_{\mathrm{obs},i};\theta^{(j)}]\big\}.\]</span></div></div>
+<div class="math-passage"><p>Under the ignorability conditions for MAR, the conditional
+distribution used in the E step comes from the data model alone; the
+response-mechanism factor drops out. The construction also applies to
+observations more general than a subvector of <span class="math inline" data-tex="Y">\(Y\)</span>. Any recorded quantity of the form
+</p><div class="math-block"><span class="math display" data-tex="Y_{\mathrm{obs}}=m(Y),">\[Y_{\mathrm{obs}}=m(Y),\]</span></div><p> with a
+noninvertible map <span class="math inline" data-tex="M">\(M\)</span> contains
+partial information about the full observation. Censoring, grouping, and
+latent-class observations all fit this description. The next example
+makes this coarsening explicit: an observed blood type can be compatible
+with more than one underlying genotype.</p></div>
+<h2 id="section-2">2.2 Allele frequencies from
+blood types</h2>
+<p>Blood-type data provide a particularly transparent example because
+the unobserved genotypes take only finitely many values. The observed
+phenotype identifies some genotypes exactly and merges others. In the E
+step we divide each ambiguous phenotype count among compatible genotypes
+according to conditional probabilities. In the M step we estimate allele
+frequencies as if these fractional genotype counts were observed.</p>
+<p>A phenotype is an observable characteristic, while a genotype
+describes the alleles at the relevant genetic locus. In the simplified
+diploid setting used here, each subject carries two alleles, one on each
+chromosome of a homologous pair; humans ordinarily have 23 such
+chromosome pairs. Different allele combinations can produce the same
+phenotype. Consequently, when only the phenotype is measured, the
+genotype is latent even though the subject has a definite genotype. The
+statistical problem is to recover population allele frequencies from the
+coarser phenotype counts.</p>
+<p>Different genotypes may lead to the same phenotype, so there is a
+coarsening of information from genotype to phenotype. A simple and
+classic example of single-gene-controlled phenotypes is human blood
+type. The locus controlling blood type resides on chromosome 9 at band
+q34, and it controls blood type by determining the antigens on the
+surface of the red blood cells. There are three alleles, A, B, and O,
+which are responsible for generating antigen A, antigen B, and no
+antigen, respectively. So, alleles A and B are “co-dominant” and O is
+“recessive” (see Figure <a href="#fig:bt">2.1</a>), giving rise to four
+blood types A, B, AB, and O.</p>
+<figure>
+<a aria-label="Open figure at full size" class="figure-link" href="figures/bloodtype.png"><img alt="Genotypes and corresponding phenotypes of ABO
+gene." src="figures/bloodtype.png"/></a>
+<div id="fig:bt">
+</div>
+<figcaption> Genotypes and corresponding phenotypes of ABO
+gene.</figcaption>
+</figure>
+<div class="math-passage"><p>But there are 6 genotypes, <span class="math inline" data-tex="AA, AO, BB,
+BO, AB, OO">\(AA, AO, BB,
+BO, AB, OO\)</span>. <span class="math inline" data-tex="AA">\(AA\)</span> and <span class="math inline" data-tex="AO">\(AO\)</span> lead to blood type <span class="math inline" data-tex="A">\(A\)</span>; <span class="math inline" data-tex="BB">\(BB\)</span> and <span class="math inline" data-tex="BO">\(BO\)</span> to blood type <span class="math inline" data-tex="B">\(B\)</span>; <span class="math inline" data-tex="AB">\(AB\)</span> and <span class="math inline" data-tex="OO">\(OO\)</span> correspond to blood types <span class="math inline" data-tex="AB">\(AB\)</span> and <span class="math inline" data-tex="O">\(O\)</span>, respectively. Under the assumption of
+infinite population size and random mating, the occurrences of the
+alleles in each person can be considered independent (Hardy-Weinberg
+Law). So, if we denote the population frequency of alleles <span class="math inline" data-tex="A, B">\(A, B\)</span>, and <span class="math inline" data-tex="O">\(O\)</span>, as <span class="math inline" data-tex="p_A,
+p_B">\(p_A,
+p_B\)</span>, and <span class="math inline" data-tex="p_O">\(p_O\)</span>,
+respectively, then </p><div class="math-block"><span class="math display" data-tex="\operatorname{Pr}(AA)=p_A^2,
+\operatorname{Pr}(AO)=2p_Ap_O, \operatorname{Pr}(BB)=p_B^2,
+\operatorname{Pr}(BO)=2p_Bp_O,">\[\operatorname{Pr}(AA)=p_A^2,
+\operatorname{Pr}(AO)=2p_Ap_O, \operatorname{Pr}(BB)=p_B^2,
+\operatorname{Pr}(BO)=2p_Bp_O,\]</span></div><div class="math-block"><span class="math display" data-tex="\operatorname{Pr}(AB)=2p_Ap_B,
+\operatorname{Pr}(OO)=p_O^2.">\[\operatorname{Pr}(AB)=2p_Ap_B,
+\operatorname{Pr}(OO)=p_O^2.\]</span></div></div>
+<div class="math-passage"><p>Suppose we have a random sample of <span class="math inline" data-tex="n">\(n\)</span> subjects, among which <span class="math inline" data-tex="n_A, n_B, n_{AB},">\(n_A, n_B, n_{AB},\)</span> and <span class="math inline" data-tex="n_O">\(n_O\)</span> are observed to have blood types
+<span class="math inline" data-tex="A, B, AB">\(A, B, AB\)</span>, and <span class="math inline" data-tex="O">\(O\)</span>, respectively. We want to estimate the
+allele frequencies <span class="math inline" data-tex="\theta:=(p_A, p_B,
+p_O)">\(\theta:=(p_A, p_B,
+p_O)\)</span>. Suppose, instead of the phenotype data <span class="math inline" data-tex="D_{\mathrm{obs}}:=(n_A, n_B, n_{AB},n_O)">\(D_{\mathrm{obs}}:=(n_A, n_B, n_{AB},n_O)\)</span>,
+we had observed the counts for each genotype <span class="math inline" data-tex="D:=(N_{AA},N_{AO},N_{BB},N_{BO},N_{AB},
+N_{OO})">\(D:=(N_{AA},N_{AO},N_{BB},N_{BO},N_{AB},
+N_{OO})\)</span>, where </p><div class="math-block"><span class="math display" data-tex="N_{AA}+N_{AO}=n_A,
+N_{BB}+N_{BO}=n_B, N_{AB}=n_{AB}, N_{OO}=n_{OO}.">\[N_{AA}+N_{AO}=n_A,
+N_{BB}+N_{BO}=n_B, N_{AB}=n_{AB}, N_{OO}=n_{OO}.\]</span></div></div>
+<div class="math-passage"><p>By the Hardy-Weinberg assumption of independent mating, the genotype
+data <span class="math inline" data-tex="D">\(D\)</span> is equivalent to a random
+sample of <span class="math inline" data-tex="2n">\(2n\)</span> alleles, with observed
+counts <span class="math inline" data-tex="2N_{AA}+N_{AO}+N_{AB}">\(2N_{AA}+N_{AO}+N_{AB}\)</span>, <span class="math inline" data-tex="2N_{BB}+N_{BO}+N_{AB}">\(2N_{BB}+N_{BO}+N_{AB}\)</span>, and <span class="math inline" data-tex="2N_{OO}+N_{AO}+N_{BO}">\(2N_{OO}+N_{AO}+N_{BO}\)</span>. for alleles <span class="math inline" data-tex="A">\(A\)</span>, <span class="math inline" data-tex="B">\(B\)</span>, and <span class="math inline" data-tex="O">\(O\)</span>, respectively. Hence, the MLEs for
+<span class="math inline" data-tex="\theta">\(\theta\)</span> would be </p><div class="math-block"><span class="math display" data-tex="\widehat
+p_A=\frac{2N_{AA}+N_{AO}+N_{AB}}{2n},">\[\widehat
+p_A=\frac{2N_{AA}+N_{AO}+N_{AB}}{2n},\]</span></div><div class="math-block"><span class="math display" data-tex="\widehat
+p_B=\frac{2N_{BB}+N_{BO}+N_{AB}}{2n},">\[\widehat
+p_B=\frac{2N_{BB}+N_{BO}+N_{AB}}{2n},\]</span></div><div class="math-block"><span class="math display" data-tex="\widehat
+p_O=\frac{2N_{OO}+N_{AO}+N_{BO}}{2n}.">\[\widehat
+p_O=\frac{2N_{OO}+N_{AO}+N_{BO}}{2n}.\]</span></div></div>
+<div class="math-passage"><p>However, since we do not observe the <span class="math inline" data-tex="N">\(N\)</span>s, we might want to replace the numbers
+with their corresponding estimates based on the observed phenotype data.
+For example, the population fraction of genotype <span class="math inline" data-tex="AA">\(AA\)</span> within the population of blood type
+<span class="math inline" data-tex="A">\(A\)</span> is </p><div class="math-block"><span class="math display" data-tex="\operatorname{Pr}(\mbox{Genotype $AA$}\mid
+\mbox{Blood type
+$A$})=\frac{\operatorname{Pr}(AA)}{\operatorname{Pr}(AA)+\operatorname{Pr}(AO)}=\frac{p_A^2}{p_A^2+2p_Ap_O}.">\[\operatorname{Pr}(\mbox{Genotype $AA$}\mid
+\mbox{Blood type
+$A$})=\frac{\operatorname{Pr}(AA)}{\operatorname{Pr}(AA)+\operatorname{Pr}(AO)}=\frac{p_A^2}{p_A^2+2p_Ap_O}.\]</span></div><p>
+So we should replace <span class="math inline" data-tex="N_{AA}">\(N_{AA}\)</span> with
+</p><div class="math-block"><span class="math display" data-tex="\widehat
+N_{AA}:=\frac{n_Ap_A^2}{p_A^2+2p_Ap_O}.">\[\widehat
+N_{AA}:=\frac{n_Ap_A^2}{p_A^2+2p_Ap_O}.\]</span></div><p> Similarly for the other
+<span class="math inline" data-tex="N">\(N\)</span>s.</p></div>
+<div class="math-passage"><p>The problem is that the “estimated” genotype frequencies contain the
+unknown parameters. This suggests using an iterative scheme, where at
+the <span class="math inline" data-tex="(j+1)">\((j+1)\)</span>th iteration, one computes
+</p><div class="math-block"><span class="math display" data-tex="p_A^{(j+1)}=\frac{2\widehat
+N_{AA}^{(j)}+\widehat N_{AO}^{(j)}+n_{AB}}{2n},">\[p_A^{(j+1)}=\frac{2\widehat
+N_{AA}^{(j)}+\widehat N_{AO}^{(j)}+n_{AB}}{2n},\]</span></div><div class="math-block"><span class="math display" data-tex="p_B^{(j+1)}=\frac{2\widehat N_{BB}^{(j)}+\widehat
+N_{BO}^{(j)}+n_{AB}}{2n},">\[p_B^{(j+1)}=\frac{2\widehat N_{BB}^{(j)}+\widehat
+N_{BO}^{(j)}+n_{AB}}{2n},\]</span></div><div class="math-block"><span class="math display" data-tex="p_O^{(j+1)}=\frac{2n_{OO}+\widehat
+N_{AO}^{(j)}+\widehat N_{BO}^{(j)}}{2n},">\[p_O^{(j+1)}=\frac{2n_{OO}+\widehat
+N_{AO}^{(j)}+\widehat N_{BO}^{(j)}}{2n},\]</span></div></div>
+<div class="math-passage"><p>The expected genotype counts in the updates are obtained by
+allocating each ambiguous blood-type count among its compatible
+genotypes. For blood type A, the allocations are </p><div class="math-block"><span class="math display" data-tex="\begin{gathered}\widehat
+N_{AA}^{(j)}=\frac{n_A{p_A^{(j)}}^2}{{p_A^{(j)}}^2+2p_A^{(j)}p_O^{(j)}}\\[6pt]
+\widehat
+N_{AO}^{(j)}=\frac{n_A2p_A^{(j)}p_O^{(j)}}{{p_A^{(j)}}^2+2p_A^{(j)}p_O^{(j)}}\end{gathered}">\[\begin{gathered}\widehat
+N_{AA}^{(j)}=\frac{n_A{p_A^{(j)}}^2}{{p_A^{(j)}}^2+2p_A^{(j)}p_O^{(j)}}\\[6pt]
+\widehat
+N_{AO}^{(j)}=\frac{n_A2p_A^{(j)}p_O^{(j)}}{{p_A^{(j)}}^2+2p_A^{(j)}p_O^{(j)}}\end{gathered}\]</span></div><p>
+and the corresponding allocations for blood type B are </p><div class="math-block"><span class="math display" data-tex="\begin{gathered}\widehat
+N_{BB}^{(j)}=\frac{n_B{p_B^{(j)}}^2}{{p_B^{(j)}}^2+2p_B^{(j)}p_O^{(j)}}\\[6pt]
+\widehat
+N_{BO}^{(j)}=\frac{n_B2p_B^{(j)}p_O^{(j)}}{{p_B^{(j)}}^2+2p_B^{(j)}p_O^{(j)}}.\end{gathered}">\[\begin{gathered}\widehat
+N_{BB}^{(j)}=\frac{n_B{p_B^{(j)}}^2}{{p_B^{(j)}}^2+2p_B^{(j)}p_O^{(j)}}\\[6pt]
+\widehat
+N_{BO}^{(j)}=\frac{n_B2p_B^{(j)}p_O^{(j)}}{{p_B^{(j)}}^2+2p_B^{(j)}p_O^{(j)}}.\end{gathered}\]</span></div><p>
+Each pair sums to its observed phenotype count. More compactly, the
+vector of reconstructed counts is the conditional expectation </p><div class="math-block"><span class="math display" data-tex="(\widehat N_{AA}^{(j)}, \widehat N_{AO}^{(j)},
+\widehat N_{BB}^{(j)}, \widehat
+N_{BO}^{(j)})=E[(N_{AA},N_{AO},N_{BB},N_{BO})\mid
+D_{\mathrm{obs}},\theta^{(j)}].">\[(\widehat N_{AA}^{(j)}, \widehat N_{AO}^{(j)},
+\widehat N_{BB}^{(j)}, \widehat
+N_{BO}^{(j)})=E[(N_{AA},N_{AO},N_{BB},N_{BO})\mid
+D_{\mathrm{obs}},\theta^{(j)}].\]</span></div><p> This identifies the
+reconstruction as the E step. To complete the argument, the M step must
+use these conditional means in precisely the places where the
+complete-data likelihood depends on the genotype counts.</p></div>
+<p>To verify that these fractional counts define an E step, it remains
+to examine how the complete-data score depends on the genotype counts
+<span class="math inline" data-tex="N">\(N\)</span>. The multinomial log likelihood
+is linear in those counts, and differentiation with respect to the
+allele frequencies preserves that linearity. Conditional expectation can
+therefore be applied simply by replacing each count with its conditional
+mean. The explicit calculation below both proves this claim and explains
+why allocating an ambiguous phenotype to a single genotype would give a
+different algorithm.</p>
+<div class="math-passage"><p>To complete the score argument, collect the allele counts as <span class="math inline" data-tex="C_A=2N_{AA}+N_{AO}+N_{AB}">\(C_A=2N_{AA}+N_{AO}+N_{AB}\)</span>, <span class="math inline" data-tex="C_B=2N_{BB}+N_{BO}+N_{AB}">\(C_B=2N_{BB}+N_{BO}+N_{AB}\)</span>, and <span class="math inline" data-tex="C_O=2N_{OO}+N_{AO}+N_{BO}">\(C_O=2N_{OO}+N_{AO}+N_{BO}\)</span>. Up to a
+parameter-free term, </p><div class="math-block"><span class="math display" data-tex="\ell_c=C_A\log
+p_A+C_B\log p_B+C_O\log(1-p_A-p_B).">\[\ell_c=C_A\log
+p_A+C_B\log p_B+C_O\log(1-p_A-p_B).\]</span></div><p> The score with respect to
+<span class="math inline" data-tex="(p_A,p_B)">\((p_A,p_B)\)</span> is <span class="math inline" data-tex="(C_A/p_A-C_O/p_O,\
+C_B/p_B-C_O/p_O)^{\mathrm{T}}">\((C_A/p_A-C_O/p_O,\
+C_B/p_B-C_O/p_O)^{\mathrm{T}}\)</span>, which is linear in the complete
+genotype counts. Replacing the counts by their conditional expectations
+therefore gives the exact E step. Since <span class="math inline" data-tex="C_A+C_B+C_O=2n">\(C_A+C_B+C_O=2n\)</span>, maximizing the
+conditional log likelihood yields the updates already displayed. Here
+<span class="math inline" data-tex="n_{OO}=n_O">\(n_{OO}=n_O\)</span>, because blood type O
+determines genotype OO.</p></div>
+<p>Clarke et al. (1959) considered the blood types of 521 duodenal ulcer
+patients, with <span class="math inline" data-tex="n_A=186, n_B=38,
+n_{AB}=13">\(n_A=186, n_B=38,
+n_{AB}=13\)</span>, and <span class="math inline" data-tex="n_O=284">\(n_O=284\)</span>.
+Use the EM algorithm</p>
+<div id="tab:allele">
+</div>
+<div aria-label="Scrollable data table" class="table-scroll" tabindex="0"><table>
+<caption> Iterations for ABO Duodenal Ulter Data</caption>
+<thead>
+<tr>
+<th style="text-align: center;">Iteration <span class="math inline" data-tex="j">\(j\)</span></th>
+<th style="text-align: center;"><span class="math inline" data-tex="p_A^{(j)}">\(p_A^{(j)}\)</span></th>
+<th style="text-align: center;"><span class="math inline" data-tex="p_B^{(j)}">\(p_B^{(j)}\)</span></th>
+<th style="text-align: center;"><span class="math inline" data-tex="p_O^{(j)}">\(p_O^{(j)}\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">.3000</td>
+<td style="text-align: center;">.2000</td>
+<td style="text-align: center;">.5000</td>
+</tr>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">.2321</td>
+<td style="text-align: center;">.0550</td>
+<td style="text-align: center;">.7129</td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">.2160</td>
+<td style="text-align: center;">.0503</td>
+<td style="text-align: center;">.7337</td>
+</tr>
+<tr>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">.2139</td>
+<td style="text-align: center;">.0502</td>
+<td style="text-align: center;">.7359</td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">.2136</td>
+<td style="text-align: center;">.0501</td>
+<td style="text-align: center;">.7363</td>
+</tr>
+<tr>
+<td style="text-align: center;">5</td>
+<td style="text-align: center;">.2136</td>
+<td style="text-align: center;">.0501</td>
+<td style="text-align: center;">.7363</td>
+</tr>
+</tbody>
+</table></div>
+<p>It appears that convergence occurs quickly.</p>
+<p>The numerical iteration can be reproduced without specialized
+software:</p>
+<pre><code>nA &lt;- 186; nB &lt;- 38; nAB &lt;- 13; nO &lt;- 284
+n &lt;- nA + nB + nAB + nO
+p &lt;- c(A=.3, B=.2, O=.5)
+for (j in seq_len(10000)) {
+  AA &lt;- nA * p[1]^2 / (p[1]^2 + 2*p[1]*p[3])
+  AO &lt;- nA - AA
+  BB &lt;- nB * p[2]^2 / (p[2]^2 + 2*p[2]*p[3])
+  BO &lt;- nB - BB
+  next_p &lt;- c(2*AA + AO + nAB,
+              2*BB + BO + nAB, 2*nO + AO + BO)/(2*n)
+  change &lt;- max(abs(next_p - p))
+  p &lt;- next_p
+  if (change &lt; 1e-10) break
+}
+p</code></pre>
+<p>These are fractional expected counts, not a classification of each
+patient into a single genotype. A hard assignment would discard
+uncertainty and would not be this EM algorithm.</p>
+<h2 id="section-3">2.3 Finite normal mixtures</h2>
+<p>A mixture model introduces a missing class label for every
+observation. Conditional class probabilities play the same role as
+conditional genotype probabilities. The resulting M step is a collection
+of weighted normal fits. The interpretation of the weights changes with
+the model, but the underlying conditional-expectation calculation is
+identical.</p>
+<div class="math-passage"><p>The missing data framework here applies to latent variable models,
+and so does the EM algorithm. Here we give a simple example. Suppose we
+observe a continuous outcome <span class="math inline" data-tex="X">\(X\)</span>,
+whose distribution is multi-modal. A popular model for multi-modal
+distribution is the normal mixture model. Suppose there is a latent
+categorical variable <span class="math inline" data-tex="G=1,\cdots, K">\(G=1,\cdots, K\)</span>,
+where <span class="math inline" data-tex="K">\(K\)</span> is fixed, indicating the
+underlying classes of normal distribution, and </p><div class="math-block"><span class="math display" data-tex="X\mid G=k \sim N(\mu_k,\sigma^2_k),
+\operatorname{Pr}(G=k)=p_k,  k=1,\cdots, K,">\[X\mid G=k \sim N(\mu_k,\sigma^2_k),
+\operatorname{Pr}(G=k)=p_k,  k=1,\cdots, K,\]</span></div><p> where <span class="math inline" data-tex="\theta=\{(p_k,\mu_k,\sigma_k^2)">\(\theta=\{(p_k,\mu_k,\sigma_k^2)\)</span>, <span class="math inline" data-tex="k=1,\cdots, K\}">\(k=1,\cdots, K\}\)</span> consists of unknown
+parameters.</p></div>
+<div class="math-passage"><p>The (marginal) density of <span class="math inline" data-tex="X">\(X\)</span> is
+</p><div class="math-block"><span class="math display" data-tex="p_X(X;\theta)=\sum_{k=1}^Kp_kf(X;\mu_k,\sigma_k^2),">\[p_X(X;\theta)=\sum_{k=1}^Kp_kf(X;\mu_k,\sigma_k^2),\]</span></div><p>
+where <span class="math inline" data-tex="f(X;\mu_k,\sigma_k^2)=\sigma_k^{-1}\phi\left(\frac{X-\mu_k}{\sigma_k}\right)">\(f(X;\mu_k,\sigma_k^2)=\sigma_k^{-1}\phi\left(\frac{X-\mu_k}{\sigma_k}\right)\)</span>.
+Given a random sample <span class="math inline" data-tex="X_1, \cdots,
+X_n">\(X_1, \cdots,
+X_n\)</span>, it is hard to find the MLE of <span class="math inline" data-tex="\theta">\(\theta\)</span> directly based on <span class="math inline" data-tex="\sum_{i=1}^n\log p_X(X_i;\theta)">\(\sum_{i=1}^n\log p_X(X_i;\theta)\)</span>. So we
+try the EM algorithm with imagined full data <span class="math inline" data-tex="(X,G)">\((X,G)\)</span>, whose density is </p><div class="math-block"><span class="math display" data-tex="p_{X,G}(X,G;\theta)=\prod_{k=1}^K\left\{p_kf(X;\mu_k,\sigma_k^2)\right\}^{I(G=k)}.">\[p_{X,G}(X,G;\theta)=\prod_{k=1}^K\left\{p_kf(X;\mu_k,\sigma_k^2)\right\}^{I(G=k)}.\]</span></div></div>
+<div class="math-passage"><p>So the log-likelihood of <span class="math inline" data-tex="\{(X_i,G_i):i=1,\cdots,n\}">\(\{(X_i,G_i):i=1,\cdots,n\}\)</span> is </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+l_n(D;\theta)&amp;=\sum_{i=1}^n\sum_{k=1}^KI(G_i=k)\log\left\{p_kf(X_i;\mu_k,\sigma_k^2)\right\}\\
+&amp;=\sum_{k=1}^K\left(\sum_{i=1}^nI(G_i=k)\right)\log p_k\\
+&amp; +\sum_{k=1}^K\sum_{i=1}^nI(G_i=k)\log f(X_i;\mu_k,\sigma_k^2).
+\end{aligned}">\[\begin{aligned}
+l_n(D;\theta)&amp;=\sum_{i=1}^n\sum_{k=1}^KI(G_i=k)\log\left\{p_kf(X_i;\mu_k,\sigma_k^2)\right\}\\
+&amp;=\sum_{k=1}^K\left(\sum_{i=1}^nI(G_i=k)\right)\log p_k\\
+&amp; +\sum_{k=1}^K\sum_{i=1}^nI(G_i=k)\log f(X_i;\mu_k,\sigma_k^2).
+\end{aligned}\]</span></div><p> Hence, we only need to compute <span class="math inline" data-tex="E[I(G=k)\mid X;\theta]">\(E[I(G=k)\mid X;\theta]\)</span> at the E step.</p></div>
+<div class="math-passage"><p>So, at the <span class="math inline" data-tex="(j+1)">\((j+1)\)</span>th iteration,
+</p><div class="math-block"><span class="math display" data-tex="Q(\theta\mid
+\theta^{(j)})=\sum_{k=1}^K\left(\sum_{i=1}^nw_{ki}^{(j)}\right)\log
+p_k+\sum_{k=1}^K\sum_{i=1}^nw_{ki}^{(j)}\log
+f(X_i;\mu_k,\sigma_k^2),">\[Q(\theta\mid
+\theta^{(j)})=\sum_{k=1}^K\left(\sum_{i=1}^nw_{ki}^{(j)}\right)\log
+p_k+\sum_{k=1}^K\sum_{i=1}^nw_{ki}^{(j)}\log
+f(X_i;\mu_k,\sigma_k^2),\]</span></div><p> where <span class="math inline" data-tex="w_{ki}^{(j)}=E[I(G_i=k)\mid
+X_i;\theta^{(j)}]">\(w_{ki}^{(j)}=E[I(G_i=k)\mid
+X_i;\theta^{(j)}]\)</span>. For the M step, after straightforward
+derivation that completely parallels that of MLEs for multinomial and
+Gaussian data, we have </p><div class="math-block"><span class="math display" data-tex="p_k^{(j+1)}=n^{-1}\sum_{i=1}^nw_{ki}^{(j)},\,\,
+\mu_k^{(j+1)}=\frac{\sum_{i=1}^nw_{ki}^{(j)}X_i}{\sum_{i=1}^nw_{ki}^{(j)}},">\[p_k^{(j+1)}=n^{-1}\sum_{i=1}^nw_{ki}^{(j)},\,\,
+\mu_k^{(j+1)}=\frac{\sum_{i=1}^nw_{ki}^{(j)}X_i}{\sum_{i=1}^nw_{ki}^{(j)}},\]</span></div><div class="math-block"><span class="math display" data-tex="{\sigma^2_k}^{(j+1)}=\frac{\sum_{i=1}^nw_{ki}^{(j)}(X_i-\mu_k^{(j+1)})^2}{\sum_{i=1}^nw_{ki}^{(j)}}">\[{\sigma^2_k}^{(j+1)}=\frac{\sum_{i=1}^nw_{ki}^{(j)}(X_i-\mu_k^{(j+1)})^2}{\sum_{i=1}^nw_{ki}^{(j)}}\]</span></div></div>
+<div class="math-passage"><p>For the E step, we compute </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+w_{ki}^{(j)}=E[I(G_i=k)\mid
+X_i,\theta^{(j)}]&amp;=\frac{p_{X,G}(X_i,G_i=k;\theta^{(j)})}{p_X(X_i;\theta^{(j)})}\\
+&amp;=\frac{p_{X,G}(X_i,G_i=k;\theta^{(j)})}{\sum_{l=1}^Kp_{X,G}(X_i,G_i=l;\theta^{(j)})}\\
+&amp;=\frac{p_k^{(j)}f(X_i;\mu_k^{(j)},{\sigma_k^{(j)}}^2)}{\sum_{l=1}^Kp_l^{(j)}f(X_i;\mu_l^{(j)},{\sigma_l^{(j)}}^2)}.
+\end{aligned}">\[\begin{aligned}
+w_{ki}^{(j)}=E[I(G_i=k)\mid
+X_i,\theta^{(j)}]&amp;=\frac{p_{X,G}(X_i,G_i=k;\theta^{(j)})}{p_X(X_i;\theta^{(j)})}\\
+&amp;=\frac{p_{X,G}(X_i,G_i=k;\theta^{(j)})}{\sum_{l=1}^Kp_{X,G}(X_i,G_i=l;\theta^{(j)})}\\
+&amp;=\frac{p_k^{(j)}f(X_i;\mu_k^{(j)},{\sigma_k^{(j)}}^2)}{\sum_{l=1}^Kp_l^{(j)}f(X_i;\mu_l^{(j)},{\sigma_l^{(j)}}^2)}.
+\end{aligned}\]</span></div><p> This wraps up the EM algorithm for normal mixture
+models.</p></div>
+<p>Mixture fitting also illustrates the limits of EM. Relabeling
+components leaves the mixture density unchanged. With unconstrained
+component variances, a normal-mixture likelihood can be unbounded when
+one component collapses onto one observation. In practice,
+initialization, variance constraints or penalties, and checks for
+near-empty components are part of the model-fitting problem. Monotone
+likelihood improvement alone does not establish that a meaningful global
+maximum has been found.</p>
+<h2 id="section-4">2.4 Why EM increases the
+likelihood</h2>
+<p>The ascent argument compares two distributions for the missing data
+conditional on the same observed record. Their discrepancy is a
+Kullback–Leibler divergence. Jensen’s inequality makes that discrepancy
+nonnegative and provides a lower-bound interpretation of the E step. The
+calculation below proves likelihood ascent; it should not be read as a
+proof that the iterates converge to a global maximizer.</p>
+<p>The essence of the EM algorithm is that maximizing <span class="math inline" data-tex="Q(\theta\mid \theta^{(j)})">\(Q(\theta\mid \theta^{(j)})\)</span> leads to an
+increase in the observed-data log-likelihood <span class="math inline" data-tex="l_n(D_{\mathrm{obs}};\theta)">\(l_n(D_{\mathrm{obs}};\theta)\)</span>. This
+assertion is proved in the this theoretical section. The entropy (or
+information) inequality at the heart of the EM algorithm is a
+consequence of Jensen’s inequality.</p>
+<blockquote>
+<p><strong>Proposition 2.1 (Jensen’s Inequality).</strong> <span id="prop:jensen"></span> Let <span class="math inline" data-tex="Y">\(Y\)</span> be a
+random variable with values in a possibly infinite interval <span class="math inline" data-tex="(a,b)">\((a,b)\)</span>. If <span class="math inline" data-tex="h(Y)">\(h(Y)\)</span> is convex on <span class="math inline" data-tex="(a,b)">\((a,b)\)</span>, then <span class="math inline" data-tex="E[h(Y)] \geq h[E(Y)]">\(E[h(Y)] \geq h[E(Y)]\)</span>. For a strictly
+convex function, equality holds in Jensen’s inequality if and only if
+<span class="math inline" data-tex="Y= E(Y)">\(Y= E(Y)\)</span> almost surely.</p>
+</blockquote>
+<blockquote>
+<div class="math-passage"><p><strong>Proposition 2.2 (Entropy Inequality).</strong> <span id="prop:entro"></span> Let <span class="math inline" data-tex="f">\(f\)</span> and
+<span class="math inline" data-tex="g">\(g\)</span> be probability densities with
+respect to a measure <span class="math inline" data-tex="\mu">\(\mu\)</span>. If <span class="math inline" data-tex="E_f">\(E_f\)</span> denotes expectation under density
+<span class="math inline" data-tex="f">\(f\)</span>, then, </p><div class="math-block"><span class="math display" data-tex="E_f\log\left(\frac{g}{f}\right) \leq 0,">\[E_f\log\left(\frac{g}{f}\right) \leq 0,\]</span></div><p>
+with equality only if <span class="math inline" data-tex="f = g">\(f = g\)</span> almost
+everywhere relative to <span class="math inline" data-tex="\mu">\(\mu\)</span>.</p></div>
+</blockquote>
+<div class="math-passage"><p>Proof. The function <span class="math inline" data-tex="h(x)=-\log x">\(h(x)=-\log x\)</span>
+is strictly convex on <span class="math inline" data-tex="(0,\infty)">\((0,\infty)\)</span>.
+We apply Proposition <a href="#prop:jensen">2.1</a> to the random
+variable <span class="math inline" data-tex="g/f">\(g/f\)</span>: </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+-E_f\log\left(\frac{g}{f}\right) \geq -\log
+E_f\left(\frac{g}{f}\right)=-\log \int \frac{g}{f}f d\mu=-\log 1=0.
+\end{aligned}">\[\begin{aligned}
+-E_f\log\left(\frac{g}{f}\right) \geq -\log
+E_f\left(\frac{g}{f}\right)=-\log \int \frac{g}{f}f d\mu=-\log 1=0.
+\end{aligned}\]</span></div></div>
+<div class="math-passage"><p>Denote <span class="math inline" data-tex="L(D;\theta)">\(L(D;\theta)\)</span> and <span class="math inline" data-tex="L(D_{\mathrm{obs}};\theta)">\(L(D_{\mathrm{obs}};\theta)\)</span> as the full
+data likelihood and the observed data likelihood, respectively. We want
+to show that each EM step increase the log-likelihood of the observed
+data, i.e., </p><div class="math-block"><span class="math display" data-tex="\log
+L(D_{\mathrm{obs}};\theta^{(j+1)})\geq \log
+L(D_{\mathrm{obs}};\theta^{(j)}).">\[\log
+L(D_{\mathrm{obs}};\theta^{(j+1)})\geq \log
+L(D_{\mathrm{obs}};\theta^{(j)}).\]</span></div><p> Recall that </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+Q(\theta|\theta^{(j)})&amp;= E[\log
+L(D;\theta)|D_{\mathrm{obs}},\theta^{(j)}].
+\end{aligned}">\[\begin{aligned}
+Q(\theta|\theta^{(j)})&amp;= E[\log
+L(D;\theta)|D_{\mathrm{obs}},\theta^{(j)}].
+\end{aligned}\]</span></div><p> Consequently, </p><div class="math-block"><span class="math display" data-tex="Q(\theta|\theta^{(j)})-\log
+L(D_{\mathrm{obs}};\theta)= E\left[\log
+\frac{L(D;\theta)}{L(D_{\mathrm{obs}};\theta)}\Big|D_{\mathrm{obs}},\theta^{(j)}\right].">\[Q(\theta|\theta^{(j)})-\log
+L(D_{\mathrm{obs}};\theta)= E\left[\log
+\frac{L(D;\theta)}{L(D_{\mathrm{obs}};\theta)}\Big|D_{\mathrm{obs}},\theta^{(j)}\right].\]</span></div></div>
+<div class="math-passage"><p>Note that </p><div class="math-block"><span class="math display" data-tex="L(D\mid
+D_{\mathrm{obs}};\theta):=\frac{L(D;\theta)}{L(D_{\mathrm{obs}};\theta)}">\[L(D\mid
+D_{\mathrm{obs}};\theta):=\frac{L(D;\theta)}{L(D_{\mathrm{obs}};\theta)}\]</span></div><p>
+is the conditional density of <span class="math inline" data-tex="D">\(D\)</span>
+given <span class="math inline" data-tex="D_{\mathrm{obs}}">\(D_{\mathrm{obs}}\)</span> under <span class="math inline" data-tex="\theta">\(\theta\)</span>. By Proposition <a href="#prop:entro">2.2</a>, </p><div class="math-block"><span class="math display" data-tex="\begin{equation}\tag{2.1}\label{eq:qiq}\begin{aligned}
+
+Q(\theta|\theta^{(j)})-\log L(D_{\mathrm{obs}};\theta)&amp;=E\left[\log
+L(D|D_{\mathrm{obs}};\theta)\Big|D_{\mathrm{obs}},\theta^{(j)}\right]\\
+&amp;\leq E\left[\log
+L(D|D_{\mathrm{obs}};\theta^{(j)})\Big|D_{\mathrm{obs}},\theta^{(j)}\right]\\
+&amp;= E\left[\log
+\frac{L(D;\theta^{(j)})}{L(D_{\mathrm{obs}};\theta^{(j)})}\Big|D_{\mathrm{obs}},\theta^{(j)}\right]\\
+&amp;=Q(\theta^{(j)}|\theta^{(j)})-\log
+L(D_{\mathrm{obs}};\theta^{(j)}).
+\end{aligned}\end{equation}">\[\begin{equation}\tag{2.1}\label{eq:qiq}\begin{aligned}
+
+Q(\theta|\theta^{(j)})-\log L(D_{\mathrm{obs}};\theta)&amp;=E\left[\log
+L(D|D_{\mathrm{obs}};\theta)\Big|D_{\mathrm{obs}},\theta^{(j)}\right]\\
+&amp;\leq E\left[\log
+L(D|D_{\mathrm{obs}};\theta^{(j)})\Big|D_{\mathrm{obs}},\theta^{(j)}\right]\\
+&amp;= E\left[\log
+\frac{L(D;\theta^{(j)})}{L(D_{\mathrm{obs}};\theta^{(j)})}\Big|D_{\mathrm{obs}},\theta^{(j)}\right]\\
+&amp;=Q(\theta^{(j)}|\theta^{(j)})-\log
+L(D_{\mathrm{obs}};\theta^{(j)}).
+\end{aligned}\end{equation}\]</span></div></div>
+<div class="math-passage"><p>Since inequality (<span class="math inline" data-tex="\ref{eq:qiq}">\(\ref{eq:qiq}\)</span>)
+holds for all <span class="math inline" data-tex="\theta">\(\theta\)</span>, take <span class="math inline" data-tex="\theta=\theta^{(j+1)}">\(\theta=\theta^{(j+1)}\)</span> and we have </p><div class="math-block"><span class="math display" data-tex="Q(\theta^{(j+1)}|\theta^{(j)})-\log
+L(D_{\mathrm{obs}};\theta^{(j+1)})\leq Q(\theta^{(j)}|\theta^{(j)})-\log
+L(D_{\mathrm{obs}};\theta^{(j)}).">\[Q(\theta^{(j+1)}|\theta^{(j)})-\log
+L(D_{\mathrm{obs}};\theta^{(j+1)})\leq Q(\theta^{(j)}|\theta^{(j)})-\log
+L(D_{\mathrm{obs}};\theta^{(j)}).\]</span></div><p> Because by definition <span class="math inline" data-tex="Q(\theta^{(j+1)}|\theta^{(j)})\geq
+Q(\theta^{(j)}|\theta^{(j)})">\(Q(\theta^{(j+1)}|\theta^{(j)})\geq
+Q(\theta^{(j)}|\theta^{(j)})\)</span>, we have the result </p><div class="math-block"><span class="math display" data-tex="\log L(D_{\mathrm{obs}};\theta^{(j+1)})\geq \log
+L(D_{\mathrm{obs}};\theta^{(j)}).">\[\log L(D_{\mathrm{obs}};\theta^{(j+1)})\geq \log
+L(D_{\mathrm{obs}};\theta^{(j)}).\]</span></div></div>
+<div class="math-passage"><p>More explicitly, let <span class="math inline" data-tex="q_j(z)=p(z\mid
+D_{\mathrm{obs}};\theta^{(j)})">\(q_j(z)=p(z\mid
+D_{\mathrm{obs}};\theta^{(j)})\)</span>. Then </p><div class="math-block"><span class="math display" data-tex="\ell_o(\theta)-\ell_o(\theta^{(j)})
+=Q(\theta\mid\theta^{(j)})-Q(\theta^{(j)}\mid\theta^{(j)})
++D_{\mathrm{KL}}\{q_j\Vert p(\cdot\mid
+D_{\mathrm{obs}};\theta)\}.">\[\ell_o(\theta)-\ell_o(\theta^{(j)})
+=Q(\theta\mid\theta^{(j)})-Q(\theta^{(j)}\mid\theta^{(j)})
++D_{\mathrm{KL}}\{q_j\Vert p(\cdot\mid
+D_{\mathrm{obs}};\theta)\}.\]</span></div><p> Thus merely increasing <span class="math inline" data-tex="Q">\(Q\)</span> suffices to increase <span class="math inline" data-tex="\ell_o">\(\ell_o\)</span>; an exact maximization is not
+necessary for a generalized EM step. A bounded increasing sequence of
+likelihood values converges, but convergence of parameter iterates needs
+further regularity and control of the parameter space. At a candidate
+solution, inspect the observed score, information matrix, boundary
+behavior, and sensitivity to starting values.</p></div>
+<h2 id="section-5">2.5 Observed
+information and the Louis identity</h2>
+<p>An algorithm that estimates a parameter has not yet supplied its
+uncertainty. The curvature of the complete-data criterion treats the
+missing values as known and is usually too optimistic. Louis’s identity
+subtracts the conditional variability of the complete-data score. The
+derivation that follows shows why this is precisely the information lost
+through coarsening.</p>
+<div class="math-passage"><p>One initial criticism of the EM algorithm was that it does not
+automatically provide an estimate of the covariance matrix of the MLE,
+as do some other methods, such as Newton-Raphson type methods. We know
+from asymptotic likelihood theory, that when the sample size <span class="math inline" data-tex="n">\(n\)</span> is large </p><div class="math-block"><span class="math display" data-tex="\widehat\theta\sim N(\theta_0, \mathcal
+I(\theta)^{-1}),">\[\widehat\theta\sim N(\theta_0, \mathcal
+I(\theta)^{-1}),\]</span></div><p> where <span class="math inline" data-tex="\mathcal
+I(\theta)">\(\mathcal
+I(\theta)\)</span> is the Fisher information. The Fisher information is
+the expectation of the observed information, which is the negative
+Hessian of the log-likelihood. Because the EM algorithm does not
+directly provide the correct information matrix at convergence, a
+variety of methods have been proposed for obtaining the asymptotic
+covariance matrix of the MLE.</p></div>
+<p>The observed information matrix in missing data problems, <span class="math inline" data-tex="I(\theta; D_{\mathrm{obs}})">\(I(\theta; D_{\mathrm{obs}})\)</span>, can be found
+directly by differentiating the log-likelihood <span class="math inline" data-tex="\log L(D_{\mathrm{obs}};\theta)">\(\log L(D_{\mathrm{obs}};\theta)\)</span> twice
+w.r.t. <span class="math inline" data-tex="\theta">\(\theta\)</span>. However, this
+approach is not always practical since the likelihood of the observed
+data may be difficult to find. Louis (1982) proposed a method of
+obtaining the observed information matrix directly from quantities
+calculated in the EM algorithm. For simplicity, denote the missing part
+of the data as <span class="math inline" data-tex="D_{\mathrm{mis}}">\(D_{\mathrm{mis}}\)</span>.
+So, <span class="math inline" data-tex="D=(D_{\mathrm{obs}},
+D_{\mathrm{mis}})">\(D=(D_{\mathrm{obs}},
+D_{\mathrm{mis}})\)</span>.</p>
+<div class="math-passage"><p>Observe that the full data likelihood can be written as </p><div class="math-block"><span class="math display" data-tex="L(D;\theta)=L(D_{\mathrm{mis}}\mid
+D_{\mathrm{obs}};\theta)L(D_{\mathrm{obs}};\theta).">\[L(D;\theta)=L(D_{\mathrm{mis}}\mid
+D_{\mathrm{obs}};\theta)L(D_{\mathrm{obs}};\theta).\]</span></div><p>
+Consequently, </p><div class="math-block"><span class="math display" data-tex="\log L(D;\theta)=\log
+L(D_{\mathrm{mis}}\mid D_{\mathrm{obs}};\theta)+\log
+L(D_{\mathrm{obs}};\theta).">\[\log L(D;\theta)=\log
+L(D_{\mathrm{mis}}\mid D_{\mathrm{obs}};\theta)+\log
+L(D_{\mathrm{obs}};\theta).\]</span></div><p> Differentiating both sides of the
+equation twice with respect to <span class="math inline" data-tex="\theta">\(\theta\)</span> yields </p><div class="math-block"><span class="math display" data-tex="I(D_{\mathrm{obs}};\theta)=I(D;\theta)+\frac{\partial^2}{\partial\theta^{\otimes
+2}}\log L(D_{\mathrm{mis}}\mid D_{\mathrm{obs}};\theta),">\[I(D_{\mathrm{obs}};\theta)=I(D;\theta)+\frac{\partial^2}{\partial\theta^{\otimes
+2}}\log L(D_{\mathrm{mis}}\mid D_{\mathrm{obs}};\theta),\]</span></div><p> where
+<span class="math inline" data-tex="I(D;\theta)">\(I(D;\theta)\)</span> is the full-data
+information, and </p><div class="math-block"><span class="math display" data-tex="-\frac{\partial^2}{\partial\theta^{\otimes
+2}}\log L(D_{\mathrm{mis}}\mid D_{\mathrm{obs}};\theta)">\[-\frac{\partial^2}{\partial\theta^{\otimes
+2}}\log L(D_{\mathrm{mis}}\mid D_{\mathrm{obs}};\theta)\]</span></div><p>
+represents missing-data information.</p></div>
+<div class="math-passage"><p>So, the above equation can be interpreted as </p><div class="math-block"><span class="math display" data-tex="\mbox{Available information}=\mbox{Full
+information}-\mbox{Missing information}.">\[\mbox{Available information}=\mbox{Full
+information}-\mbox{Missing information}.\]</span></div><p> Taking conditional
+expectation of both sides given <span class="math inline" data-tex="D_{\mathrm{obs}}">\(D_{\mathrm{obs}}\)</span>, we have </p><div class="math-block"><span class="math display" data-tex="\begin{equation}\tag{2.2}\label{eq:info}
+I(D_{\mathrm{obs}};\theta)=E[I(D;\theta)|D_{\mathrm{obs}};\theta]+E\left[\frac{\partial^2}{\partial\theta^{\otimes
+2}}\log
+L(D_{\mathrm{mis}}|D_{\mathrm{obs}};\theta)\Big|D_{\mathrm{obs}};\theta\right].\end{equation}">\[\begin{equation}\tag{2.2}\label{eq:info}
+I(D_{\mathrm{obs}};\theta)=E[I(D;\theta)|D_{\mathrm{obs}};\theta]+E\left[\frac{\partial^2}{\partial\theta^{\otimes
+2}}\log
+L(D_{\mathrm{mis}}|D_{\mathrm{obs}};\theta)\Big|D_{\mathrm{obs}};\theta\right].\end{equation}\]</span></div><p>
+The first term on the right hand side of (<span class="math inline" data-tex="\ref{eq:info}">\(\ref{eq:info}\)</span>) can be estimated by </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+E[I(D;\widehat\theta)|D_{\mathrm{obs}};\widehat\theta]&amp;=-E\left[\frac{\partial^2}{\partial\theta^{\otimes
+2}}\log
+L(D;\theta)\Big|D_{\mathrm{obs}};\widehat\theta\right]\Bigg|_{\theta=\widehat\theta}\\
+&amp;=-\frac{\partial^2}{\partial\theta^{\otimes 2}}E\left[\log
+L(D;\theta)|D_{\mathrm{obs}};\widehat\theta\right]\Big|_{\theta=\widehat\theta}\\
+&amp;=-\frac{\partial^2}{\partial\theta^{\otimes
+2}}Q(\theta|\widehat\theta)\Big|_{\theta=\widehat\theta}.
+\end{aligned}">\[\begin{aligned}
+E[I(D;\widehat\theta)|D_{\mathrm{obs}};\widehat\theta]&amp;=-E\left[\frac{\partial^2}{\partial\theta^{\otimes
+2}}\log
+L(D;\theta)\Big|D_{\mathrm{obs}};\widehat\theta\right]\Bigg|_{\theta=\widehat\theta}\\
+&amp;=-\frac{\partial^2}{\partial\theta^{\otimes 2}}E\left[\log
+L(D;\theta)|D_{\mathrm{obs}};\widehat\theta\right]\Big|_{\theta=\widehat\theta}\\
+&amp;=-\frac{\partial^2}{\partial\theta^{\otimes
+2}}Q(\theta|\widehat\theta)\Big|_{\theta=\widehat\theta}.
+\end{aligned}\]</span></div></div>
+<div class="math-passage"><p>Louis (1982) showed that the missing information, represented by the
+negative of the second term on the right hand side of (<span class="math inline" data-tex="\ref{eq:info}">\(\ref{eq:info}\)</span>), can be estimated by </p><div class="math-block"><span class="math display" data-tex="E\left[\dot l_n(D;\widehat\theta)^{\otimes
+2}\Bigm\vert D_{\mathrm{obs}};\widehat\theta\right]-\dot
+l_n(D_{\mathrm{obs}};\widehat\theta)^{\otimes 2},">\[E\left[\dot l_n(D;\widehat\theta)^{\otimes
+2}\Bigm\vert D_{\mathrm{obs}};\widehat\theta\right]-\dot
+l_n(D_{\mathrm{obs}};\widehat\theta)^{\otimes 2},\]</span></div><p> where <span class="math inline" data-tex="\dot l_n(D_{\mathrm{obs}};\theta)">\(\dot l_n(D_{\mathrm{obs}};\theta)\)</span> is the
+observed-data score function. At the MLE <span class="math inline" data-tex="\widehat\theta">\(\widehat\theta\)</span>, <span class="math inline" data-tex="\dot
+l_n(D_{\mathrm{obs}};\widehat\theta)=0">\(\dot
+l_n(D_{\mathrm{obs}};\widehat\theta)=0\)</span>. Therefore, the
+observed-data information can be estimated by </p><div class="math-block"><span class="math display" data-tex="I(D_{\mathrm{obs}};\widehat\theta)=E[I(D;\widehat\theta)|D_{\mathrm{obs}},\widehat\theta]
+-E\left[\dot l_n(D;\widehat\theta)^{\otimes
+2}\Big|D_{\mathrm{obs}};\widehat\theta\right],">\[I(D_{\mathrm{obs}};\widehat\theta)=E[I(D;\widehat\theta)|D_{\mathrm{obs}},\widehat\theta]
+-E\left[\dot l_n(D;\widehat\theta)^{\otimes
+2}\Big|D_{\mathrm{obs}};\widehat\theta\right],\]</span></div><p> where </p><div class="math-block"><span class="math display" data-tex="E[I(D;\widehat\theta)|D_{\mathrm{obs}},\widehat\theta]=-\frac{\partial^2}{\partial\theta^{\otimes
+2}}Q(\theta|\widehat\theta)\Big|_{\theta=\widehat\theta}.">\[E[I(D;\widehat\theta)|D_{\mathrm{obs}},\widehat\theta]=-\frac{\partial^2}{\partial\theta^{\otimes
+2}}Q(\theta|\widehat\theta)\Big|_{\theta=\widehat\theta}.\]</span></div></div>
+<div class="math-passage"><p>So the first term of <span class="math inline" data-tex="I(D_{\mathrm{obs}};\widehat\theta)">\(I(D_{\mathrm{obs}};\widehat\theta)\)</span> can be
+computed based on the <span class="math inline" data-tex="Q">\(Q\)</span> function.
+The second term is not a byproduct of the EM algorithm. In the iid case,
+</p><div class="math-block"><span class="math display" data-tex="\dot l_n(D;\widehat\theta)^{\otimes
+2}=\sum_{i=1}^n\dot l(Y_i;\widehat\theta)^{\otimes 2}+\sum_{i\neq j}\sum
+\dot l(Y_i;\widehat\theta)\dot
+l(Y_j;\widehat\theta)^{\mathrm{T}}.">\[\dot l_n(D;\widehat\theta)^{\otimes
+2}=\sum_{i=1}^n\dot l(Y_i;\widehat\theta)^{\otimes 2}+\sum_{i\neq j}\sum
+\dot l(Y_i;\widehat\theta)\dot
+l(Y_j;\widehat\theta)^{\mathrm{T}}.\]</span></div><p> Consequently, </p><div class="math-block"><span class="math display" data-tex="E\left[\dot l_n(D;\widehat\theta)^{\otimes
+2}\Bigm\vert D_{\mathrm{obs}};\widehat\theta\right]=
+\sum_{i=1}^n\widehat{\dot l_i^{\otimes 2}}
++\sum_{i\neq j}\sum \widehat{\dot l}_i\widehat{\dot l_j}^{\mathrm{T}}
+,">\[E\left[\dot l_n(D;\widehat\theta)^{\otimes
+2}\Bigm\vert D_{\mathrm{obs}};\widehat\theta\right]=
+\sum_{i=1}^n\widehat{\dot l_i^{\otimes 2}}
++\sum_{i\neq j}\sum \widehat{\dot l}_i\widehat{\dot l_j}^{\mathrm{T}}
+,\]</span></div><p> where </p><div class="math-block"><span class="math display" data-tex="\widehat{\dot l_i^{\otimes
+2}}=E\left[\dot l(Y_i;\widehat\theta)^{\otimes 2}\Bigm\vert
+D_{\mathrm{obs}};\widehat\theta\right],">\[\widehat{\dot l_i^{\otimes
+2}}=E\left[\dot l(Y_i;\widehat\theta)^{\otimes 2}\Bigm\vert
+D_{\mathrm{obs}};\widehat\theta\right],\]</span></div><div class="math-block"><span class="math display" data-tex="\widehat{\dot l}_i=E\left[\dot
+l(Y_i;\widehat\theta)\Bigm\vert
+D_{\mathrm{obs}};\widehat\theta\right]">\[\widehat{\dot l}_i=E\left[\dot
+l(Y_i;\widehat\theta)\Bigm\vert
+D_{\mathrm{obs}};\widehat\theta\right]\]</span></div></div>
+<div class="math-passage"><p>Note that </p><div class="math-block"><span class="math display" data-tex="\sum_{i\neq j}\sum
+\widehat{\dot l}_i\widehat{\dot l_j}^{\mathrm{T}}=\sum_{i=1}^n
+\widehat{\dot l}_i\sum_{j\neq i}\widehat{\dot
+l_j}^{\mathrm{T}}=-\sum_{i=1}^n \widehat{\dot l}_i^{\otimes 2},">\[\sum_{i\neq j}\sum
+\widehat{\dot l}_i\widehat{\dot l_j}^{\mathrm{T}}=\sum_{i=1}^n
+\widehat{\dot l}_i\sum_{j\neq i}\widehat{\dot
+l_j}^{\mathrm{T}}=-\sum_{i=1}^n \widehat{\dot l}_i^{\otimes 2},\]</span></div><p>
+since </p><div class="math-block"><span class="math display" data-tex="\sum_{i=1}^n \widehat{\dot
+l}_i=\sum_{i=1}^nE\left[\dot l(Y_i;\widehat\theta)\Bigm\vert
+D_{\mathrm{obs}};\widehat\theta\right]=0">\[\sum_{i=1}^n \widehat{\dot
+l}_i=\sum_{i=1}^nE\left[\dot l(Y_i;\widehat\theta)\Bigm\vert
+D_{\mathrm{obs}};\widehat\theta\right]=0\]</span></div><p>. In conclusion, </p><div class="math-block"><span class="math display" data-tex="\begin{equation}\tag{2.3}\label{eq:louis}\begin{aligned}
+
+\widehat{I}(D_{\mathrm{obs}};\widehat\theta)&amp;=-\sum_{i=1}^nE\left[\ddot
+l(Y_i;\widehat\theta)\Big|D_{\mathrm{obs}};\widehat\theta\right]-\sum_{i=1}^nE\left[\dot
+l(Y_i;\widehat\theta)^{\otimes
+2}\Big|D_{\mathrm{obs}};\widehat\theta\right]\\
+&amp; +\sum_{i=1}^nE\left[\dot
+l(Y_i;\widehat\theta)\Big|D_{\mathrm{obs}};\widehat\theta\right]^{\otimes
+2}.
+\end{aligned}\end{equation}">\[\begin{equation}\tag{2.3}\label{eq:louis}\begin{aligned}
+
+\widehat{I}(D_{\mathrm{obs}};\widehat\theta)&amp;=-\sum_{i=1}^nE\left[\ddot
+l(Y_i;\widehat\theta)\Big|D_{\mathrm{obs}};\widehat\theta\right]-\sum_{i=1}^nE\left[\dot
+l(Y_i;\widehat\theta)^{\otimes
+2}\Big|D_{\mathrm{obs}};\widehat\theta\right]\\
+&amp; +\sum_{i=1}^nE\left[\dot
+l(Y_i;\widehat\theta)\Big|D_{\mathrm{obs}};\widehat\theta\right]^{\otimes
+2}.
+\end{aligned}\end{equation}\]</span></div></div>
+<div class="math-passage"><p>At any parameter value for which differentiation under the integral
+is justified, write <span class="math inline" data-tex="S_c=\partial\ell_c/\partial\theta">\(S_c=\partial\ell_c/\partial\theta\)</span> and
+<span class="math inline" data-tex="I_c=-\partial^2\ell_c/\partial\theta\partial\theta^{\mathrm{T}}">\(I_c=-\partial^2\ell_c/\partial\theta\partial\theta^{\mathrm{T}}\)</span>.
+Then </p><div class="math-block"><span class="math display" data-tex="S_o=E(S_c\mid O),\qquad
+I_o=E(I_c\mid O)-\operatorname{Var}(S_c\mid O).">\[S_o=E(S_c\mid O),\qquad
+I_o=E(I_c\mid O)-\operatorname{Var}(S_c\mid O).\]</span></div><p> This form
+avoids a common implementation error: the conditional second moment of
+the score and the outer product of its conditional mean are different
+quantities. For independent subjects the conditional variances add. At
+an interior MLE the <em>total</em> observed score is zero, but
+individual observed scores generally are not. The final sum of
+individual outer products in the Louis formula must therefore be
+retained.</p></div>
+<h2 id="section-6">2.6 Standard errors for
+allele frequencies</h2>
+<div class="math-passage"><p>To put this example into iid framework, let <span class="math inline" data-tex="Y\in\{AA,AO,BB,BO,AB,OO\}">\(Y\in\{AA,AO,BB,BO,AB,OO\}\)</span> be the full
+genotype data for one individual. The full data log-likelihood for <span class="math inline" data-tex="\theta=(p_A, p_B)^{\mathrm{T}}">\(\theta=(p_A, p_B)^{\mathrm{T}}\)</span> is </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+l(Y;\theta)&amp;=I(Y=AA)f_{AA}(\theta)+I(Y=AO)f_{AO}(\theta)\\
+&amp; +I(Y=BB)f_{BB}(\theta)+I(Y=BO)f_{BO}(\theta)\\
+&amp; +I(Y=AB)f_{AB}(\theta)+I(Y=OO)f_{OO}(\theta),
+\end{aligned}">\[\begin{aligned}
+l(Y;\theta)&amp;=I(Y=AA)f_{AA}(\theta)+I(Y=AO)f_{AO}(\theta)\\
+&amp; +I(Y=BB)f_{BB}(\theta)+I(Y=BO)f_{BO}(\theta)\\
+&amp; +I(Y=AB)f_{AB}(\theta)+I(Y=OO)f_{OO}(\theta),
+\end{aligned}\]</span></div><p> where <span class="math inline" data-tex="f_{AA}(\theta)=\log p_A^2, f_{AO}(\theta)=\log
+2p_A(1-p_A-p_B)">\(f_{AA}(\theta)=\log p_A^2, f_{AO}(\theta)=\log
+2p_A(1-p_A-p_B)\)</span>, <span class="math inline" data-tex="f_{BB}(\theta)=\log p_B^2">\(f_{BB}(\theta)=\log p_B^2\)</span>, <span class="math inline" data-tex="f_{BO}=\log 2p_B(1-p_A-p_B)">\(f_{BO}=\log 2p_B(1-p_A-p_B)\)</span>, <span class="math inline" data-tex="f_{AB}(\theta)=\log 2p_Ap_B">\(f_{AB}(\theta)=\log 2p_Ap_B\)</span>, and <span class="math inline" data-tex="f_{OO}(\theta)=\log (1-p_A-p_B)^2">\(f_{OO}(\theta)=\log (1-p_A-p_B)^2\)</span>.</p></div>
+<div class="math-passage"><p>Consequently, </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+\dot l(Y;\theta)&amp;=I(Y=AA)\dot f_{AA}(\theta)+I(Y=AO)\dot
+f_{AO}(\theta)\\
+&amp; +I(Y=BB)\dot f_{BB}(\theta)+I(Y=BO)\dot f_{BO}(\theta)\\
+&amp; +I(Y=AB)\dot f_{AB}(\theta)+I(Y=OO)\dot f_{OO}(\theta).
+\end{aligned}">\[\begin{aligned}
+\dot l(Y;\theta)&amp;=I(Y=AA)\dot f_{AA}(\theta)+I(Y=AO)\dot
+f_{AO}(\theta)\\
+&amp; +I(Y=BB)\dot f_{BB}(\theta)+I(Y=BO)\dot f_{BO}(\theta)\\
+&amp; +I(Y=AB)\dot f_{AB}(\theta)+I(Y=OO)\dot f_{OO}(\theta).
+\end{aligned}\]</span></div><p> Note that the square of <span class="math inline" data-tex="\dot l(Y;\theta)">\(\dot l(Y;\theta)\)</span> has a simple form </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+\dot l(Y;\theta)^{\otimes 2}&amp;=I(Y=AA)\dot f_{AA}(\theta)^{\otimes
+2}+I(Y=AO)\dot f_{AO}(\theta)^{\otimes 2}\\
+&amp; +I(Y=BB)\dot f_{BB}(\theta)^{\otimes 2}+I(Y=BO)\dot
+f_{BO}(\theta)^{\otimes 2}\\
+&amp; +I(Y=AB)\dot f_{AB}(\theta)^{\otimes 2}+I(Y=OO)\dot
+f_{OO}(\theta)^{\otimes 2}.
+\end{aligned}">\[\begin{aligned}
+\dot l(Y;\theta)^{\otimes 2}&amp;=I(Y=AA)\dot f_{AA}(\theta)^{\otimes
+2}+I(Y=AO)\dot f_{AO}(\theta)^{\otimes 2}\\
+&amp; +I(Y=BB)\dot f_{BB}(\theta)^{\otimes 2}+I(Y=BO)\dot
+f_{BO}(\theta)^{\otimes 2}\\
+&amp; +I(Y=AB)\dot f_{AB}(\theta)^{\otimes 2}+I(Y=OO)\dot
+f_{OO}(\theta)^{\otimes 2}.
+\end{aligned}\]</span></div></div>
+<div class="math-passage"><p>Let <span class="math inline" data-tex="Y_{\mathrm{obs}}\in\{A,B,AB,O\}">\(Y_{\mathrm{obs}}\in\{A,B,AB,O\}\)</span> denote
+the observed blood type data. In the E step, we have calculated the
+conditional probabilities of <span class="math inline" data-tex="Y">\(Y\)</span>
+given <span class="math inline" data-tex="Y_{\mathrm{obs}}">\(Y_{\mathrm{obs}}\)</span>. In
+particular, define <span class="math inline" data-tex="w_A(\theta)=\frac{p_A^2}{p_A^2+2p_Ap_O},">\(w_A(\theta)=\frac{p_A^2}{p_A^2+2p_Ap_O},\)</span>
+and <span class="math inline" data-tex="w_B(\theta)=\frac{p_B^2}{p_B^2+2p_Bp_O}">\(w_B(\theta)=\frac{p_B^2}{p_B^2+2p_Bp_O}\)</span>.
+Then, we have </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+&amp;-\sum_{i=1}^nE\left[\ddot l(Y_i;\widehat\theta)\Bigm\vert
+D_{\mathrm{obs}};\widehat\theta\right]\\
+=&amp;-\sum_{i=1}^n\Bigg(I(Y_{\mathrm{obs},i}=A)\Big[w_A(\widehat\theta)\ddot
+f_{AA}(\widehat\theta)+\{1-w_A(\widehat\theta)\}\ddot
+f_{AO}(\widehat\theta)\Big]\\
+&amp; +I(Y_{\mathrm{obs},i}=B)\Big[w_B(\widehat\theta)\ddot
+f_{BB}(\widehat\theta)+\{1-w_B(\widehat\theta)\}\ddot
+f_{BO}(\widehat\theta)\Big]\\
+&amp; +I(Y_{\mathrm{obs},i}=AB)\ddot
+f_{AB}(\widehat\theta)+I(Y_{\mathrm{obs},i}=O)\ddot
+f_{OO}(\widehat\theta)\Bigg).
+\end{aligned}">\[\begin{aligned}
+&amp;-\sum_{i=1}^nE\left[\ddot l(Y_i;\widehat\theta)\Bigm\vert
+D_{\mathrm{obs}};\widehat\theta\right]\\
+=&amp;-\sum_{i=1}^n\Bigg(I(Y_{\mathrm{obs},i}=A)\Big[w_A(\widehat\theta)\ddot
+f_{AA}(\widehat\theta)+\{1-w_A(\widehat\theta)\}\ddot
+f_{AO}(\widehat\theta)\Big]\\
+&amp; +I(Y_{\mathrm{obs},i}=B)\Big[w_B(\widehat\theta)\ddot
+f_{BB}(\widehat\theta)+\{1-w_B(\widehat\theta)\}\ddot
+f_{BO}(\widehat\theta)\Big]\\
+&amp; +I(Y_{\mathrm{obs},i}=AB)\ddot
+f_{AB}(\widehat\theta)+I(Y_{\mathrm{obs},i}=O)\ddot
+f_{OO}(\widehat\theta)\Bigg).
+\end{aligned}\]</span></div></div>
+<div class="math-passage"><p>Consequently, </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+-\sum_{i=1}^nE\left[\ddot l(Y_i;\widehat\theta)\Bigm\vert
+D_{\mathrm{obs}};\widehat\theta\right]=&amp;-n_A\Big[w_A(\widehat\theta)\ddot
+f_{AA}(\widehat\theta)+\{1-w_A(\widehat\theta)\}\ddot
+f_{AO}(\widehat\theta)\Big]\\
+&amp; -n_B\Big[w_B(\widehat\theta)\ddot
+f_{BB}(\widehat\theta)+\{1-w_B(\widehat\theta)\}\ddot
+f_{BO}(\widehat\theta)\Big]\\
+&amp; -n_{AB}\ddot f_{AB}(\widehat\theta)-n_O\ddot
+f_{OO}(\widehat\theta).
+\end{aligned}">\[\begin{aligned}
+-\sum_{i=1}^nE\left[\ddot l(Y_i;\widehat\theta)\Bigm\vert
+D_{\mathrm{obs}};\widehat\theta\right]=&amp;-n_A\Big[w_A(\widehat\theta)\ddot
+f_{AA}(\widehat\theta)+\{1-w_A(\widehat\theta)\}\ddot
+f_{AO}(\widehat\theta)\Big]\\
+&amp; -n_B\Big[w_B(\widehat\theta)\ddot
+f_{BB}(\widehat\theta)+\{1-w_B(\widehat\theta)\}\ddot
+f_{BO}(\widehat\theta)\Big]\\
+&amp; -n_{AB}\ddot f_{AB}(\widehat\theta)-n_O\ddot
+f_{OO}(\widehat\theta).
+\end{aligned}\]</span></div><p> Similarly, </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+\sum_{i=1}^nE\left[\dot l(Y_i;\widehat\theta)^{\otimes 2}\Bigm\vert
+D_{\mathrm{obs}};\widehat\theta\right]&amp;=n_A\Big[w_A(\widehat\theta)\dot
+f_{AA}(\widehat\theta)^{\otimes 2}+\{1-w_A(\widehat\theta)\}\dot
+f_{AO}(\widehat\theta)^{\otimes 2}\Big]\\
+&amp;+n_B\Big[w_B(\widehat\theta)\dot f_{BB}(\widehat\theta)^{\otimes
+2}+\{1-w_B(\widehat\theta)\}\dot f_{BO}(\widehat\theta)^{\otimes
+2}\Big]\\
+&amp;+n_{AB}\dot f_{AB}(\widehat\theta)^{\otimes 2}+n_O\dot
+f_{OO}(\widehat\theta)^{\otimes 2}.
+\end{aligned}">\[\begin{aligned}
+\sum_{i=1}^nE\left[\dot l(Y_i;\widehat\theta)^{\otimes 2}\Bigm\vert
+D_{\mathrm{obs}};\widehat\theta\right]&amp;=n_A\Big[w_A(\widehat\theta)\dot
+f_{AA}(\widehat\theta)^{\otimes 2}+\{1-w_A(\widehat\theta)\}\dot
+f_{AO}(\widehat\theta)^{\otimes 2}\Big]\\
+&amp;+n_B\Big[w_B(\widehat\theta)\dot f_{BB}(\widehat\theta)^{\otimes
+2}+\{1-w_B(\widehat\theta)\}\dot f_{BO}(\widehat\theta)^{\otimes
+2}\Big]\\
+&amp;+n_{AB}\dot f_{AB}(\widehat\theta)^{\otimes 2}+n_O\dot
+f_{OO}(\widehat\theta)^{\otimes 2}.
+\end{aligned}\]</span></div></div>
+<div class="math-passage"><p>And, </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+\sum_{i=1}^nE\left[\dot l(Y_i;\widehat\theta)\Bigm\vert
+D_{\mathrm{obs}};\widehat\theta\right]^{\otimes
+2}&amp;=n_A\Big[w_A(\widehat\theta)\dot
+f_{AA}(\widehat\theta)+\{1-w_A(\widehat\theta)\}\dot
+f_{AO}(\widehat\theta)\Big]^{\otimes 2}\\
+&amp;+n_B\Big[w_B(\widehat\theta)\dot
+f_{BB}(\widehat\theta)+\{1-w_B(\widehat\theta)\}\dot
+f_{BO}(\widehat\theta)\Big]^{\otimes 2}\\
+&amp;+n_{AB}\dot f_{AB}(\widehat\theta)^{\otimes 2}+n_O\dot
+f_{OO}(\widehat\theta)^{\otimes 2}.
+\end{aligned}">\[\begin{aligned}
+\sum_{i=1}^nE\left[\dot l(Y_i;\widehat\theta)\Bigm\vert
+D_{\mathrm{obs}};\widehat\theta\right]^{\otimes
+2}&amp;=n_A\Big[w_A(\widehat\theta)\dot
+f_{AA}(\widehat\theta)+\{1-w_A(\widehat\theta)\}\dot
+f_{AO}(\widehat\theta)\Big]^{\otimes 2}\\
+&amp;+n_B\Big[w_B(\widehat\theta)\dot
+f_{BB}(\widehat\theta)+\{1-w_B(\widehat\theta)\}\dot
+f_{BO}(\widehat\theta)\Big]^{\otimes 2}\\
+&amp;+n_{AB}\dot f_{AB}(\widehat\theta)^{\otimes 2}+n_O\dot
+f_{OO}(\widehat\theta)^{\otimes 2}.
+\end{aligned}\]</span></div><p> The variance of <span class="math inline" data-tex="\widehat\theta">\(\widehat\theta\)</span> can be computed using the
+Louis formula (<span class="math inline" data-tex="\ref{eq:louis}">\(\ref{eq:louis}\)</span>). See
+A2.1 for details.</p></div>
+<div class="math-passage"><p>For completeness, the derivatives referred to in the lecture can be
+computed from six coefficient vectors. Let <span class="math inline" data-tex="v_g=(a_g,b_g,o_g)">\(v_g=(a_g,b_g,o_g)\)</span> be <span class="math inline" data-tex="(2,0,0)">\((2,0,0)\)</span> for AA, <span class="math inline" data-tex="(1,0,1)">\((1,0,1)\)</span> for AO, <span class="math inline" data-tex="(0,2,0)">\((0,2,0)\)</span> for BB, <span class="math inline" data-tex="(0,1,1)">\((0,1,1)\)</span> for BO, <span class="math inline" data-tex="(1,1,0)">\((1,1,0)\)</span> for AB, and <span class="math inline" data-tex="(0,0,2)">\((0,0,2)\)</span> for OO. With <span class="math inline" data-tex="p_O=1-p_A-p_B">\(p_O=1-p_A-p_B\)</span>, </p><div class="math-block"><span class="math display" data-tex="\nabla
+f_g=\begin{pmatrix}a_g/p_A-o_g/p_O\\b_g/p_B-o_g/p_O\end{pmatrix},\quad
+-\nabla^2 f_g=
+\begin{pmatrix}a_g/p_A^2+o_g/p_O^2&amp;o_g/p_O^2\\o_g/p_O^2&amp;b_g/p_B^2+o_g/p_O^2\end{pmatrix}.">\[\nabla
+f_g=\begin{pmatrix}a_g/p_A-o_g/p_O\\b_g/p_B-o_g/p_O\end{pmatrix},\quad
+-\nabla^2 f_g=
+\begin{pmatrix}a_g/p_A^2+o_g/p_O^2&amp;o_g/p_O^2\\o_g/p_O^2&amp;b_g/p_B^2+o_g/p_O^2\end{pmatrix}.\]</span></div><p>
+Substitution into the conditional sums gives a <span class="math inline" data-tex="2\times2">\(2\times2\)</span> observed information matrix.
+Invert it for the covariance of <span class="math inline" data-tex="(\widehat
+p_A,\widehat p_B)">\((\widehat
+p_A,\widehat p_B)\)</span>. For the third frequency, the delta method
+gives </p><div class="math-block"><span class="math display" data-tex="\operatorname{Var}(\widehat
+p_O)=(1,1)\operatorname{Cov}(\widehat p_A,\widehat
+p_B)(1,1)^{\mathrm{T}}">\[\operatorname{Var}(\widehat
+p_O)=(1,1)\operatorname{Cov}(\widehat p_A,\widehat
+p_B)(1,1)^{\mathrm{T}}\]</span></div><p>. The same calculation therefore provides
+uncertainty estimates for all three allele frequencies.</p></div>
+<p>We perform some numerical studies to assess the EM and Louis formula.
+Set <span class="math inline" data-tex="p_A=0.7">\(p_A=0.7\)</span>, <span class="math inline" data-tex="p_B=0.2">\(p_B=0.2\)</span>, and <span class="math inline" data-tex="p_O=0.1">\(p_O=0.1\)</span>, and generate data under the
+Hardy-Weinberg Law.</p>
+<div aria-label="Scrollable data table" class="table-scroll" tabindex="0"><table>
+<caption> Simulation of allele frequency estimation by EM and Louis
+formula.</caption>
+<tbody>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: right;"></td>
+<td colspan="4" style="text-align: center;"><span class="math inline" data-tex="p_A">\(p_A\)</span></td>
+<td style="text-align: right;"></td>
+<td colspan="4" style="text-align: center;"><span class="math inline" data-tex="p_B">\(p_B\)</span></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="math inline" data-tex="n">\(n\)</span></td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">Est</td>
+<td style="text-align: right;">SE</td>
+<td style="text-align: right;">SEE</td>
+<td style="text-align: right;">CP</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">Est</td>
+<td style="text-align: right;">SE</td>
+<td style="text-align: right;">SEE</td>
+<td style="text-align: right;">CP</td>
+</tr>
+<tr>
+<td style="text-align: left;">100</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">0.705</td>
+<td style="text-align: right;">0.045</td>
+<td style="text-align: right;">0.044</td>
+<td style="text-align: right;">0.948</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">0.201</td>
+<td style="text-align: right;">0.029</td>
+<td style="text-align: right;">0.030</td>
+<td style="text-align: right;">0.948</td>
+</tr>
+<tr>
+<td style="text-align: left;">200</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">0.702</td>
+<td style="text-align: right;">0.032</td>
+<td style="text-align: right;">0.031</td>
+<td style="text-align: right;">0.939</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">0.200</td>
+<td style="text-align: right;">0.021</td>
+<td style="text-align: right;">0.021</td>
+<td style="text-align: right;">0.946</td>
+</tr>
+<tr>
+<td style="text-align: left;">500</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">0.701</td>
+<td style="text-align: right;">0.020</td>
+<td style="text-align: right;">0.020</td>
+<td style="text-align: right;">0.938</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">0.200</td>
+<td style="text-align: right;">0.013</td>
+<td style="text-align: right;">0.013</td>
+<td style="text-align: right;">0.948</td>
+</tr>
+</tbody>
+</table></div>
+<p>Est and SE are the empirical means and standard error of the
+parameter estimator; SEE is the empirical average of the standard error
+estimator; CP is the empirical coverage probability of the 95%
+confidence interval. Each entry is based on 2,000 replicates.</p>
+<figure>
+<a aria-label="Open figure at full size" class="figure-link" href="figures/allele_freq.png"><img alt="Estimates of ABO allele frequencies in the duodenal ulter
+data (Clarke et al., 1959) and their 95% confidence intervals produced
+by the Louis formula." src="figures/allele_freq.png"/></a>
+<div id="fig:allele">
+</div>
+<figcaption> Estimates of ABO allele frequencies in the duodenal ulter
+data (Clarke et al., 1959) and their 95% confidence intervals produced
+by the Louis formula.</figcaption>
+</figure>
+<h2 id="section-7">2.7 Coarsening and exponential
+families</h2>
+<p>The finite examples can be organized around sufficient statistics. In
+a canonical exponential family the complete-data score is linear in
+<span class="math inline" data-tex="t(Y)">\(t(Y)\)</span>. Consequently the E step needs
+only <span class="math inline" data-tex="E\{t(Y)\mid O\}">\(E\{t(Y)\mid O\}\)</span>, while the
+information calculation additionally needs its conditional second
+moment. This is why an EM algorithm can be simple even when the observed
+likelihood has an awkward integral or sum.</p>
+<div class="math-passage"><p>To make our framework more general so as to allow for coarsening of
+data (Example 1) as well as actually missing values, we introduce, for
+the <span class="math inline" data-tex="i">\(i\)</span>th subject, the (random) <span class="math inline" data-tex="M_i">\(M_i\)</span> representing the “coarsening”
+pattern, so that the coarsened data is </p><div class="math-block"><span class="math display" data-tex="Y_{i,\mathrm{obs}}=M_i(Y_i).">\[Y_{i,\mathrm{obs}}=M_i(Y_i).\]</span></div><p> For
+example, if full data <span class="math inline" data-tex="Y_i=(Y_{i1},Y_{i2})^{\mathrm{T}}">\(Y_i=(Y_{i1},Y_{i2})^{\mathrm{T}}\)</span>, and the
+observed data are <span class="math inline" data-tex="(R_i,Y_{i1},R_iY_{i2})">\((R_i,Y_{i1},R_iY_{i2})\)</span>, then </p><div class="math-block"><span class="math display" data-tex="M_i=R_if_1+(1-R_i)f_0,">\[M_i=R_if_1+(1-R_i)f_0,\]</span></div><p> where <span class="math inline" data-tex="f_1(y)=y">\(f_1(y)=y\)</span> and <span class="math inline" data-tex="f_0(y)=y_1">\(f_0(y)=y_1\)</span> for <span class="math inline" data-tex="y=(y_1,y_2)">\(y=(y_1,y_2)\)</span>. So there are two possible
+coarsening patterns <span class="math inline" data-tex="f_1">\(f_1\)</span> and <span class="math inline" data-tex="f_0">\(f_0\)</span>, which represent no coarsening at all
+and extracting the first element, respectively.</p></div>
+<div class="math-passage"><p>In Example 1, <span class="math inline" data-tex="M_i">\(M_i\)</span> is the (fixed)
+function </p><div class="math-block"><span class="math display" data-tex="m(Y_i)=\left\{\begin{array}{ll}A,&amp;\mbox{if
+}Y_i\in\{AA,AO\}\\
+B,&amp;\mbox{if }Y_i\in\{BB,BO\}\\
+AB,&amp;\mbox{if }Y_i=AB\\
+O,&amp;\mbox{if }Y_i=OO
+\end{array}\right.">\[m(Y_i)=\left\{\begin{array}{ll}A,&amp;\mbox{if
+}Y_i\in\{AA,AO\}\\
+B,&amp;\mbox{if }Y_i\in\{BB,BO\}\\
+AB,&amp;\mbox{if }Y_i=AB\\
+O,&amp;\mbox{if }Y_i=OO
+\end{array}\right.\]</span></div><p> The representation of <span><strong>observed
+data</strong></span> as <span class="math inline" data-tex="\{M_i,
+Y_{i,\mathrm{obs}}:=M_i(Y_i)\}">\(\{M_i,
+Y_{i,\mathrm{obs}}:=M_i(Y_i)\}\)</span> also allows each subject to have
+a different coarsening pattern.</p></div>
+<div class="math-passage"><p>Under this framework, suppose there are <span class="math inline" data-tex="K">\(K\)</span> levels of coarsening pattern, i.e.,
+<span class="math inline" data-tex="M\in\{m_1,\cdots, m_K\}">\(M\in\{m_1,\cdots, m_K\}\)</span>. Denote the
+coarsening mechanism by </p><div class="math-block"><span class="math display" data-tex="\pi_k(y)=\operatorname{Pr}(M=m_k\mid Y=y),
+k=1,\cdots, K.">\[\pi_k(y)=\operatorname{Pr}(M=m_k\mid Y=y),
+k=1,\cdots, K.\]</span></div><p> The familiar classifications of missing data
+based on missingness mechanism can be easily extend to the coarsened
+data as follows: <span><strong>MCAR</strong></span>: <span class="math inline" data-tex="M\perp\!\!\!\perp Y">\(M\perp\!\!\!\perp Y\)</span>, i.e., the <span class="math inline" data-tex="\pi_k(y)">\(\pi_k(y)\)</span> are constants </p><div class="math-block"><span class="math display" data-tex="\pi_k(y)=\pi_{0k}, k=1,\cdots, K.">\[\pi_k(y)=\pi_{0k}, k=1,\cdots, K.\]</span></div><p>
+<span><strong>MAR</strong></span>: <span class="math inline" data-tex="M\perp\!\!\!\perp Y\mid M(Y)">\(M\perp\!\!\!\perp Y\mid M(Y)\)</span>, i.e., <span class="math inline" data-tex="\pi_k(y)">\(\pi_k(y)\)</span> is only a function of <span class="math inline" data-tex="m_k(y)">\(m_k(y)\)</span> </p><div class="math-block"><span class="math display" data-tex="\pi_k(y)=\widetilde\pi_k\Big(m_k(y)\Big),
+k=1,\cdots, K.">\[\pi_k(y)=\widetilde\pi_k\Big(m_k(y)\Big),
+k=1,\cdots, K.\]</span></div><p> <span><strong>NMAR</strong></span>: <span class="math inline" data-tex="M">\(M\)</span> is not independent of <span class="math inline" data-tex="Y">\(Y\)</span> even given <span class="math inline" data-tex="M(Y)">\(M(Y)\)</span>, i.e., at least one <span class="math inline" data-tex="\pi_k(y)">\(\pi_k(y)\)</span> depends on elements of <span class="math inline" data-tex="y">\(y\)</span> other than <span class="math inline" data-tex="m_k(y)">\(m_k(y)\)</span>.</p></div>
+<div class="math-passage"><p>The <span><strong>exponential family</strong></span> of statistical
+models encompass the most commonly used models such as the normal,
+binomial/multinomial, Poission, and etc.. A model belongs to the
+exponential family if its desnity can be parameterized as </p><div class="math-block"><span class="math display" data-tex="p_Y(Y;\theta)=\exp\Big\{\theta^{\mathrm{T}}t(Y)+b(Y)-a(\theta)\Big\},">\[p_Y(Y;\theta)=\exp\Big\{\theta^{\mathrm{T}}t(Y)+b(Y)-a(\theta)\Big\},\]</span></div><p>
+where <span class="math inline" data-tex="\theta">\(\theta\)</span> is called the
+<span><strong>canonical parameter</strong></span>, <span class="math inline" data-tex="t(\cdot)">\(t(\cdot)\)</span> and <span class="math inline" data-tex="b(\cdot)">\(b(\cdot)\)</span> are functions of <span class="math inline" data-tex="Y">\(Y\)</span>, and <span class="math inline" data-tex="a(\theta)">\(a(\theta)\)</span> is the normalizing constant for
+density under <span class="math inline" data-tex="\theta">\(\theta\)</span>. So, the score
+function is </p><div class="math-block"><span class="math display" data-tex="\dot l(Y;\theta)=t(Y)-\dot
+a(\theta).">\[\dot l(Y;\theta)=t(Y)-\dot
+a(\theta).\]</span></div></div>
+<div class="math-passage"><p>Based on an iid sample of <span class="math inline" data-tex="n">\(n\)</span>
+subjects, the score function is </p><div class="math-block"><span class="math display" data-tex="\dot
+l_n(D;\theta)=\sum_i^nt(Y_i)-n\dot a(\theta).">\[\dot
+l_n(D;\theta)=\sum_i^nt(Y_i)-n\dot a(\theta).\]</span></div><p> So, inference of
+<span class="math inline" data-tex="\theta">\(\theta\)</span> is solely based on <span class="math inline" data-tex="\sum_i^nt(Y_i)">\(\sum_i^nt(Y_i)\)</span>, which is hence termed the
+<span><strong>sufficient statistic</strong></span>. With full data, the
+MLE solves </p><div class="math-block"><span class="math display" data-tex="\sum_i^nt(Y_i)-n\dot
+a(\theta)=0,">\[\sum_i^nt(Y_i)-n\dot
+a(\theta)=0,\]</span></div><p> using possibly the Newton-Raphson algorithm. With
+coarsened data <span class="math inline" data-tex="D_{\mathrm{obs}}=\{(M_i,M_i(Y_i))">\(D_{\mathrm{obs}}=\{(M_i,M_i(Y_i))\)</span>, <span class="math inline" data-tex="i=1,\cdots,n\}">\(i=1,\cdots,n\}\)</span>, the M step for the EM
+algorithm closely mimics the MLE for full data.</p></div>
+<div class="math-passage"><p>Observe that the full data score function is linear in the sufficient
+statistic, so, at the <span class="math inline" data-tex="(j+1)">\((j+1)\)</span>th
+iteration, the M step solves </p><div class="math-block"><span class="math display" data-tex="\sum_i^n\widehat t_i^{(j)}-n\dot
+a(\theta)=0,">\[\sum_i^n\widehat t_i^{(j)}-n\dot
+a(\theta)=0,\]</span></div><p> where in general </p><div class="math-block"><span class="math display" data-tex="\widehat t_i^{(j)}=E[t(Y_i)\mid
+M_i,M_i(Y_i);\theta^{(j)}],">\[\widehat t_i^{(j)}=E[t(Y_i)\mid
+M_i,M_i(Y_i);\theta^{(j)}],\]</span></div><p> and under MAR </p><div class="math-block"><span class="math display" data-tex="\widehat t_i^{(j)}=E[t(Y_i)\mid
+M_i(Y_i);\theta^{(j)}].">\[\widehat t_i^{(j)}=E[t(Y_i)\mid
+M_i(Y_i);\theta^{(j)}].\]</span></div><p> We can also derive a general expression
+for the variance estimator of the MLE <span class="math inline" data-tex="\widehat\theta">\(\widehat\theta\)</span> with coarsened data using
+Louis formula.</p></div>
+<div class="math-passage"><p>Assuming MAR, denote </p><div class="math-block"><span class="math display" data-tex="\begin{gathered}\widehat
+t_i=E[t(Y_i)|M_i(Y_i);\widehat\theta]\\[6pt]
+\mbox{and }\widehat{t_i^{\otimes 2}}=E[t(Y_i)^{\otimes
+2}|M_i(Y_i);\widehat\theta].\end{gathered}">\[\begin{gathered}\widehat
+t_i=E[t(Y_i)|M_i(Y_i);\widehat\theta]\\[6pt]
+\mbox{and }\widehat{t_i^{\otimes 2}}=E[t(Y_i)^{\otimes
+2}|M_i(Y_i);\widehat\theta].\end{gathered}\]</span></div><p> Using the Louis
+formula (<span class="math inline" data-tex="\ref{eq:louis}">\(\ref{eq:louis}\)</span>), an
+estimator for the observed data information is </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+\widehat
+I(D_{\mathrm{obs}};\widehat\theta)&amp;=\sum_{i=1}^n\Bigg\{\ddot
+a(\widehat\theta)-\Big(\widehat{t_i^{\otimes 2}}-\dot
+a(\widehat\theta)\widehat t_i^{\mathrm{T}}-\widehat t_i\dot
+a(\widehat\theta)^{\mathrm{T}}
++\dot a(\widehat\theta)^{\otimes 2}\Big)\\
+&amp; +\widehat{t}_i^{\otimes 2}-\dot a(\widehat\theta)\widehat
+t_i^{\mathrm{T}}-\widehat t_i\dot a(\widehat\theta)^{\mathrm{T}}
++\dot a(\widehat\theta)^{\otimes 2}\Bigg\}\\
+&amp;=\sum_{i=1}^n\Big\{\ddot
+a(\widehat\theta)-\big(\widehat{t_i^{\otimes 2}}-\widehat t_i^{\otimes
+2}\big)\Big\}
+\end{aligned}">\[\begin{aligned}
+\widehat
+I(D_{\mathrm{obs}};\widehat\theta)&amp;=\sum_{i=1}^n\Bigg\{\ddot
+a(\widehat\theta)-\Big(\widehat{t_i^{\otimes 2}}-\dot
+a(\widehat\theta)\widehat t_i^{\mathrm{T}}-\widehat t_i\dot
+a(\widehat\theta)^{\mathrm{T}}
++\dot a(\widehat\theta)^{\otimes 2}\Big)\\
+&amp; +\widehat{t}_i^{\otimes 2}-\dot a(\widehat\theta)\widehat
+t_i^{\mathrm{T}}-\widehat t_i\dot a(\widehat\theta)^{\mathrm{T}}
++\dot a(\widehat\theta)^{\otimes 2}\Bigg\}\\
+&amp;=\sum_{i=1}^n\Big\{\ddot
+a(\widehat\theta)-\big(\widehat{t_i^{\otimes 2}}-\widehat t_i^{\otimes
+2}\big)\Big\}
+\end{aligned}\]</span></div></div>
+<div class="math-passage"><p>In fact, it is easily seen that the missing information for the <span class="math inline" data-tex="i">\(i\)</span>th subject </p><div class="math-block"><span class="math display" data-tex="\widehat{t_i^{\otimes 2}}-\widehat t_i^{\otimes
+2}=\widehat{\operatorname{Var}}\big(t(Y_i)\mid
+M_i(Y_i);\widehat\theta\big).">\[\widehat{t_i^{\otimes 2}}-\widehat t_i^{\otimes
+2}=\widehat{\operatorname{Var}}\big(t(Y_i)\mid
+M_i(Y_i);\widehat\theta\big).\]</span></div><p> So the missing information is due
+to the extra variability of the sufficient statistic <span class="math inline" data-tex="T(Y)">\(T(Y)\)</span> unaccounted for by <span class="math inline" data-tex="M(Y)">\(M(Y)\)</span>. It may very well happen that the
+canonical parameter is not directly in the form of the parameter of
+interest. If the parameter of interest is <span class="math inline" data-tex="\psi">\(\psi\)</span> and the canonical parameter <span class="math inline" data-tex="\theta">\(\theta\)</span> can be expressed as <span class="math inline" data-tex="\theta(\psi)">\(\theta(\psi)\)</span>. Then the information of
+<span class="math inline" data-tex="\psi">\(\psi\)</span> can be estimated by </p><div class="math-block"><span class="math display" data-tex="\widehat I(D_{\mathrm{obs}};\widehat\psi)=\dot
+\theta(\widehat\psi)^{\mathrm{T}}\widehat
+I\big(D_{\mathrm{obs}};\theta(\widehat\psi)\big)\dot
+\theta(\widehat\psi)">\[\widehat I(D_{\mathrm{obs}};\widehat\psi)=\dot
+\theta(\widehat\psi)^{\mathrm{T}}\widehat
+I\big(D_{\mathrm{obs}};\theta(\widehat\psi)\big)\dot
+\theta(\widehat\psi)\]</span></div></div>
+<div class="math-passage"><p>For vector sufficient statistics, expand outer products with both
+cross terms: <span class="math inline" data-tex="(t-a)(t-a)^{\mathrm{T}}=tt^{\mathrm{T}}-ta^{\mathrm{T}}-at^{\mathrm{T}}+aa^{\mathrm{T}}">\((t-a)(t-a)^{\mathrm{T}}=tt^{\mathrm{T}}-ta^{\mathrm{T}}-at^{\mathrm{T}}+aa^{\mathrm{T}}\)</span>.
+The dimensionally explicit result is </p><div class="math-block"><span class="math display" data-tex="I_o(\widehat\theta)=n\ddot
+a(\widehat\theta)-\sum_i\operatorname{Var}_{\widehat\theta}\{t(Y_i)\mid
+O_i\}.">\[I_o(\widehat\theta)=n\ddot
+a(\widehat\theta)-\sum_i\operatorname{Var}_{\widehat\theta}\{t(Y_i)\mid
+O_i\}.\]</span></div><p> For a smooth one-to-one reparameterization <span class="math inline" data-tex="\theta=\theta(\psi)">\(\theta=\theta(\psi)\)</span>, the Jacobian
+transformation of observed information shown above holds at a stationary
+point; away from it, second derivatives of the transformation produce
+additional score terms.</p></div>
+<h2 id="section-8">2.8 Grouped multinomial
+observations</h2>
+<div class="math-passage"><p>Consider the multinomial data <span class="math inline" data-tex="Y=k">\(Y=k\)</span> with probability <span class="math inline" data-tex="p_k">\(p_k\)</span>, <span class="math inline" data-tex="k=1,\cdots, K">\(k=1,\cdots, K\)</span>, where <span class="math inline" data-tex="\sum_{k=1}^K p_k=1">\(\sum_{k=1}^K p_k=1\)</span>. The log-likelihood of
+<span class="math inline" data-tex="Y">\(Y\)</span> is </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+\sum_{k=1}^KI(Y=k)\log p_k&amp;=\sum_{k=1}^{K-1}I(Y=k)\log p_k
++\left(1-\sum_{k=1}^{K-1}I(Y=k)\right)\log p_K\\
+&amp;=\sum_{k=1}^{K-1}I(Y=k)\log \left(p_k/p_K\right)+\log p_K\\
+&amp;=:\theta^{\mathrm{T}}T-\log\left(1+\sum_{k=1}^{K-1}e^{\theta_k}\right),
+\end{aligned}">\[\begin{aligned}
+\sum_{k=1}^KI(Y=k)\log p_k&amp;=\sum_{k=1}^{K-1}I(Y=k)\log p_k
++\left(1-\sum_{k=1}^{K-1}I(Y=k)\right)\log p_K\\
+&amp;=\sum_{k=1}^{K-1}I(Y=k)\log \left(p_k/p_K\right)+\log p_K\\
+&amp;=:\theta^{\mathrm{T}}T-\log\left(1+\sum_{k=1}^{K-1}e^{\theta_k}\right),
+\end{aligned}\]</span></div><p> where <span class="math inline" data-tex="\theta=(\theta_1,\cdots,\theta_{K-1})^{\mathrm{T}}">\(\theta=(\theta_1,\cdots,\theta_{K-1})^{\mathrm{T}}\)</span>,
+<span class="math inline" data-tex="\theta_k=\log(p_k/p_K)">\(\theta_k=\log(p_k/p_K)\)</span>, and <span class="math inline" data-tex="T=(I(Y=1),\cdots,I(Y={K-1}))^{\mathrm{T}}">\(T=(I(Y=1),\cdots,I(Y={K-1}))^{\mathrm{T}}\)</span>.</p></div>
+<div class="math-passage"><p>To get back to <span class="math inline" data-tex="p:=(p_1,\cdots,
+p_{K-1})^{\mathrm{T}}">\(p:=(p_1,\cdots,
+p_{K-1})^{\mathrm{T}}\)</span> from <span class="math inline" data-tex="\theta">\(\theta\)</span>, note that </p><div class="math-block"><span class="math display" data-tex="p_k=\frac{e^{\theta_k}}{1+\sum_{k'=1}^{K-1}e^{\theta_{k'}}},  k=1,\cdots,
+K-1,">\[p_k=\frac{e^{\theta_k}}{1+\sum_{k'=1}^{K-1}e^{\theta_{k'}}},  k=1,\cdots,
+K-1,\]</span></div><p> and <span class="math inline" data-tex="p_K=\left(1+\sum_{k=1}^{K-1}e^{\theta_{k}}\right)^{-1}">\(p_K=\left(1+\sum_{k=1}^{K-1}e^{\theta_{k}}\right)^{-1}\)</span>.
+In this case, </p><div class="math-block"><span class="math display" data-tex="a(\theta)=\log\left(1+\sum_{k=1}^{K-1}e^{\theta_k}\right),">\[a(\theta)=\log\left(1+\sum_{k=1}^{K-1}e^{\theta_k}\right),\]</span></div><p>
+and it is easily shown that </p><div class="math-block"><span class="math display" data-tex="\dot
+a(\theta)=\frac{e^{\theta}}{1+\sum_{k=1}^{K-1}e^{\theta_{k}}}=p,">\[\dot
+a(\theta)=\frac{e^{\theta}}{1+\sum_{k=1}^{K-1}e^{\theta_{k}}}=p,\]</span></div><p>
+where <span class="math inline" data-tex="e^{\theta}=(e^{\theta_1},\cdots,e^{\theta_{K-1}})">\(e^{\theta}=(e^{\theta_1},\cdots,e^{\theta_{K-1}})\)</span>.</p></div>
+<div class="math-passage"><p>Hence, the full data score function is </p><div class="math-block"><span class="math display" data-tex="\dot l_n(Y;\theta)=\sum_{i=1}^n(T_i-p).">\[\dot l_n(Y;\theta)=\sum_{i=1}^n(T_i-p).\]</span></div><p>
+So, the M step for the <span class="math inline" data-tex="(j+1)">\((j+1)\)</span>th
+iteration of EM algorithm with incomplete data is as follows: </p><div class="math-block"><span class="math display" data-tex="p^{(j+1)}=n^{-1}\sum_{i=1}^n\widehat
+T_i^{(j)},">\[p^{(j+1)}=n^{-1}\sum_{i=1}^n\widehat
+T_i^{(j)},\]</span></div><p> where </p><div class="math-block"><span class="math display" data-tex="\widehat
+T_i^{(j)}=E[T_i\mid M_i,M_i(Y_i);\theta^{(j)}].">\[\widehat
+T_i^{(j)}=E[T_i\mid M_i,M_i(Y_i);\theta^{(j)}].\]</span></div><p> The E step
+(computation of the <span class="math inline" data-tex="\widehat
+T_i^{(j)}">\(\widehat
+T_i^{(j)}\)</span>), of course, depends on the specific coarsening
+patterns and mechanism.</p></div>
+<p>Here we consider a grouping scenario that frequently occurs to
+multinomial data. Assume that the <span class="math inline" data-tex="K">\(K\)</span>-level data <span class="math inline" data-tex="Y">\(Y\)</span> are grouped into <span class="math inline" data-tex="L">\(L\)</span> categories, where <span class="math inline" data-tex="L&lt;K">\(L&lt;K\)</span>. Specifically, define a
+many-to-one function <span class="math inline" data-tex="m: \{1,\cdots,
+K\}\to\{1,\cdots, L\}">\(m: \{1,\cdots,
+K\}\to\{1,\cdots, L\}\)</span> representing the grouping pattern. For
+example, Levels 1, 2, and 3 are grouped into Group 1; Levels 4 and 5 to
+Group 2, and so on. Assume that this pattern occurs at random (MAR),
+that is, the probability of being coarsened (grouped) depends only on
+the group. In other words, all levels within a group have the same
+probability of being grouped.</p>
+<p>Further, in order to identify the full <span class="math inline" data-tex="(K-1)">\((K-1)\)</span> vector <span class="math inline" data-tex="p">\(p\)</span>, we have to assume that for each level,
+there is a positive probability of not being grouped. If otherwise, say,
+levels within <span class="math inline" data-tex="m^{-1}(l_0):=\{k:m(k)=l_0,k=1,\cdots,K\}">\(m^{-1}(l_0):=\{k:m(k)=l_0,k=1,\cdots,K\}\)</span>
+are always grouped (into the new level <span class="math inline" data-tex="l_0">\(l_0\)</span>), then we can only identify the
+probability of Group <span class="math inline" data-tex="l_0">\(l_0\)</span>, which is
+<span class="math inline" data-tex="\sum_{k\in m^{-1}(l_0)} p_k">\(\sum_{k\in m^{-1}(l_0)} p_k\)</span>, not
+those of the individual levels, if more than one, within it. These
+assumptions guarantee that vector <span class="math inline" data-tex="p">\(p\)</span>
+is identifiable by Proposition 1.1.</p>
+<div class="math-passage"><p>Under the current formulation, there are two coarsening patterns, one
+is no grouping, the other grouping by the rule <span class="math inline" data-tex="m(\cdot)">\(m(\cdot)\)</span>. So we use a binary random
+variable <span class="math inline" data-tex="R\in\{0,1\}">\(R\in\{0,1\}\)</span> define the
+random coarsening pattern </p><div class="math-block"><span class="math display" data-tex="M=Rm_0+(1-R)m,">\[M=Rm_0+(1-R)m,\]</span></div><p> where <span class="math inline" data-tex="m_0(y)=y">\(m_0(y)=y\)</span> is the identity function. Thus,
+the <span class="math inline" data-tex="k">\(k\)</span>th component of <span class="math inline" data-tex="\widehat T_i^{(j)}">\(\widehat T_i^{(j)}\)</span> is </p><div class="math-block"><span class="math display" data-tex="E[I(Y_i=k)\mid
+M_i(Y_i);\theta^{(j)}]=R_iI(Y_i=k)+(1-R_i)\frac{I(m(Y_i)=m(k))p_k^{(j)}}{\sum_{k'\in\mathcal
+C_{m(k)}}p_{k'}^{(j)}},">\[E[I(Y_i=k)\mid
+M_i(Y_i);\theta^{(j)}]=R_iI(Y_i=k)+(1-R_i)\frac{I(m(Y_i)=m(k))p_k^{(j)}}{\sum_{k'\in\mathcal
+C_{m(k)}}p_{k'}^{(j)}},\]</span></div><p> where <span class="math inline" data-tex="\mathcal C_l=m^{-1}(l), l=1,\cdots,
+L">\(\mathcal C_l=m^{-1}(l), l=1,\cdots,
+L\)</span>.</p></div>
+<div class="math-passage"><p>Now, define </p><div class="math-block"><span class="math display" data-tex="N_k=\sum_{i=1}^nR_iI(Y_i=k)">\[N_k=\sum_{i=1}^nR_iI(Y_i=k)\]</span></div><p> as the count
+in the <span class="math inline" data-tex="k">\(k\)</span>th level among the
+ungrouped, and </p><div class="math-block"><span class="math display" data-tex="\widetilde
+N_l=\sum_{i=1}^n(1-R_i)I(m(Y_i)=l)">\[\widetilde
+N_l=\sum_{i=1}^n(1-R_i)I(m(Y_i)=l)\]</span></div><p> as the count in the <span class="math inline" data-tex="l">\(l\)</span>th group among the grouped. Then, the M
+step can be expressed as </p><div class="math-block"><span class="math display" data-tex="p_k^{(j+1)}=n^{-1}\left(N_k+\widetilde
+N_{m(k)}\frac{p_k^{(j)}}{\sum_{k'\in\mathcal
+C_{m(k)}}p_{k'}^{(j)}}\right).">\[p_k^{(j+1)}=n^{-1}\left(N_k+\widetilde
+N_{m(k)}\frac{p_k^{(j)}}{\sum_{k'\in\mathcal
+C_{m(k)}}p_{k'}^{(j)}}\right).\]</span></div><p> The Louis information
+calculation follows below.</p></div>
+<div class="math-passage"><p>The information calculation for the grouped multinomial example is
+also explicit. Use <span class="math inline" data-tex="T=(I(Y=1),\ldots,I(Y=K-1))^{\mathrm{T}}">\(T=(I(Y=1),\ldots,I(Y=K-1))^{\mathrm{T}}\)</span>
+and let <span class="math inline" data-tex="q_i=E(T_i\mid O_i)">\(q_i=E(T_i\mid O_i)\)</span> under
+the fitted probabilities. For an ungrouped record the conditional
+covariance is zero. For a grouped record, </p><div class="math-block"><span class="math display" data-tex="\operatorname{Var}(T_i\mid
+O_i)=\operatorname{diag}(q_i)-q_iq_i^{\mathrm{T}},">\[\operatorname{Var}(T_i\mid
+O_i)=\operatorname{diag}(q_i)-q_iq_i^{\mathrm{T}},\]</span></div><p> where a
+category outside the compatible group receives zero probability. The
+full-data information in canonical coordinates is <span class="math inline" data-tex="\operatorname{diag}(p)-pp^{\mathrm{T}}">\(\operatorname{diag}(p)-pp^{\mathrm{T}}\)</span>
+per subject. Hence </p><div class="math-block"><span class="math display" data-tex="I_o=n\{\operatorname{diag}(p)-pp^{\mathrm{T}}\}
+-\sum_{i:R_i=0}\{\operatorname{diag}(q_i)-q_iq_i^{\mathrm{T}}\}.">\[I_o=n\{\operatorname{diag}(p)-pp^{\mathrm{T}}\}
+-\sum_{i:R_i=0}\{\operatorname{diag}(q_i)-q_iq_i^{\mathrm{T}}\}.\]</span></div><p>
+If all records merge the same categories, the resulting information may
+be singular, reflecting the identification limitation already
+discussed.</p></div>
+<h2 id="section-9">2.9 Regression with missing
+covariates</h2>
+<div class="math-passage"><p>Consider the usual linear regression model: </p><div class="math-block"><span class="math display" data-tex="Y=\beta_1+\beta_2^{\mathrm{T}}Z+\epsilon,">\[Y=\beta_1+\beta_2^{\mathrm{T}}Z+\epsilon,\]</span></div><p>
+where <span class="math inline" data-tex="\beta=(\beta_1,\beta_2^{\mathrm{T}})^{\mathrm{T}}">\(\beta=(\beta_1,\beta_2^{\mathrm{T}})^{\mathrm{T}}\)</span>
+are regression parameters, <span class="math inline" data-tex="Z=(Z_1,\cdots,
+Z_p)^{\mathrm{T}}">\(Z=(Z_1,\cdots,
+Z_p)^{\mathrm{T}}\)</span> are the covariates, and <span class="math inline" data-tex="\epsilon\sim N(0,\sigma^2)">\(\epsilon\sim N(0,\sigma^2)\)</span> is the random
+error independent of <span class="math inline" data-tex="Z">\(Z\)</span>. Suppose the
+full data are <span class="math inline" data-tex="(Y_i, Z_i), i=1,\cdots,
+n">\((Y_i, Z_i), i=1,\cdots,
+n\)</span>. In the observed data, some components of the <span class="math inline" data-tex="Z_i">\(Z_i\)</span> are missing at random, so we observe
+<span class="math inline" data-tex="(M_i, M_i(Z_i))">\((M_i, M_i(Z_i))\)</span> The full data
+likelihood can be expressed as </p><div class="math-block"><span class="math display" data-tex="p(Y\mid
+Z;\beta,\sigma^2)\eta(Z),">\[p(Y\mid
+Z;\beta,\sigma^2)\eta(Z),\]</span></div><p> where <span class="math inline" data-tex="p(Y\mid Z;\beta,\sigma^2)">\(p(Y\mid Z;\beta,\sigma^2)\)</span> is the
+conditional density of <span class="math inline" data-tex="Y">\(Y\)</span> given
+<span class="math inline" data-tex="Z">\(Z\)</span> and <span class="math inline" data-tex="\eta(Z)">\(\eta(Z)\)</span> is the density of <span class="math inline" data-tex="Z">\(Z\)</span>.</p></div>
+<div class="math-passage"><p>Because of factorization, inference on <span class="math inline" data-tex="(\beta,\sigma^2)">\((\beta,\sigma^2)\)</span> can be based on </p><div class="math-block"><span class="math display" data-tex="\prod_{i=1}^np(Y_i\mid
+Z_i;\beta,\sigma^2),">\[\prod_{i=1}^np(Y_i\mid
+Z_i;\beta,\sigma^2),\]</span></div><p> regardless of <span class="math inline" data-tex="\eta">\(\eta\)</span>, which can thus be left totally
+nonparametric. However, the density of observed data with missing
+covariates is (proportional to) </p><div class="math-block"><span class="math display" data-tex="\int_{M(z)=M(Z)}p(Y\mid
+z;\beta,\sigma^2)\eta(z)dz.">\[\int_{M(z)=M(Z)}p(Y\mid
+z;\beta,\sigma^2)\eta(z)dz.\]</span></div><p> So <span class="math inline" data-tex="\eta">\(\eta\)</span> gets entangled with the parameters
+of interest. In order to do MLE, we have to build a model for <span class="math inline" data-tex="Z">\(Z\)</span>. We discuss two scenarios: (1) <span class="math inline" data-tex="Z">\(Z\)</span> is multivariate normal; (2) <span class="math inline" data-tex="Z">\(Z\)</span> is categorical (i.e., consists of
+binary indicators).</p></div>
+<h2 id="section-10">2.10 Continuous covariates</h2>
+<p>The distinction between a missing response and a missing covariate
+now becomes decisive. With a missing response and observed covariates,
+the conditional response density integrates to one. With a missing
+covariate, both the response density and the covariate density
+participate in the integral. The response therefore helps predict the
+missing covariate, and an E step that conditions only on the other
+covariates generally uses the wrong conditional law.</p>
+<div class="math-passage"><p>Let <span class="math inline" data-tex="Z\sim N(\mu,\Sigma)">\(Z\sim N(\mu,\Sigma)\)</span>.
+Clearly, <span class="math inline" data-tex="(Y,
+Z^{\mathrm{T}})^{\mathrm{T}}">\((Y,
+Z^{\mathrm{T}})^{\mathrm{T}}\)</span> is multivariate normal: </p><div class="math-block"><span class="math display" data-tex="\left(\begin{array}{c}Y\\Z\end{array}\right)\sim
+N\left\{\left(\begin{array}{c}\beta_1+\beta_2^{T}\mu\\\mu\end{array}\right),
+\left(\begin{array}{cc}\sigma^2+\beta_2^{T}\Sigma\beta_2&amp;\beta_2^{T}\Sigma\\\Sigma\beta_2&amp;\Sigma\end{array}\right)
+\right\}.">\[\left(\begin{array}{c}Y\\Z\end{array}\right)\sim
+N\left\{\left(\begin{array}{c}\beta_1+\beta_2^{T}\mu\\\mu\end{array}\right),
+\left(\begin{array}{cc}\sigma^2+\beta_2^{T}\Sigma\beta_2&amp;\beta_2^{T}\Sigma\\\Sigma\beta_2&amp;\Sigma\end{array}\right)
+\right\}.\]</span></div><p> So this time the conditional expectation, conditional
+variance and covariance of any components of <span class="math inline" data-tex="Z">\(Z\)</span> given <span class="math inline" data-tex="Y">\(Y\)</span> and other elements of <span class="math inline" data-tex="Z">\(Z\)</span> have closed-form expressions (cf.
+A1.2.3). We obtain the MLE for <span class="math inline" data-tex="\beta">\(\beta\)</span> and <span class="math inline" data-tex="\sigma^2">\(\sigma^2\)</span> based on the incomplete data
+<span class="math inline" data-tex="(Y_i, M_i(Z_i)), i=1,\cdots, n">\((Y_i, M_i(Z_i)), i=1,\cdots, n\)</span>.</p></div>
+<div class="math-passage"><p>For simplicity of notation, re-define <span class="math inline" data-tex="Z">\(Z\)</span> to include the intercept, so <span class="math inline" data-tex="Z=(Z_0, Z_1,\cdots, Z_p)^{\mathrm{T}}">\(Z=(Z_0, Z_1,\cdots, Z_p)^{\mathrm{T}}\)</span>,
+where <span class="math inline" data-tex="Z_0=1">\(Z_0=1\)</span>. The full data
+log-likelihood is </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+l_n(D;\theta)&amp;=-\frac{1}{2\sigma^2}\sum_{i=1}^n(Y_i-\beta^{\mathrm{T}}Z_i)^2-\frac{n}{2}\log\sigma^2\\
+&amp;
+-\frac{1}{2}\sum_{i=1}^n\sum_{l=1}^p\sum_{k=1}^p(Z_{il}-\mu_l)\sigma_z^{l,k}(Z_{ik}-\mu_k)-\frac{n}{2}\log\det\Sigma,
+\end{aligned}">\[\begin{aligned}
+l_n(D;\theta)&amp;=-\frac{1}{2\sigma^2}\sum_{i=1}^n(Y_i-\beta^{\mathrm{T}}Z_i)^2-\frac{n}{2}\log\sigma^2\\
+&amp;
+-\frac{1}{2}\sum_{i=1}^n\sum_{l=1}^p\sum_{k=1}^p(Z_{il}-\mu_l)\sigma_z^{l,k}(Z_{ik}-\mu_k)-\frac{n}{2}\log\det\Sigma,
+\end{aligned}\]</span></div><p> where <span class="math inline" data-tex="\sigma_z^{l,k}">\(\sigma_z^{l,k}\)</span> is the <span class="math inline" data-tex="(l,k)">\((l,k)\)</span>th element of <span class="math inline" data-tex="\Sigma^{-1}">\(\Sigma^{-1}\)</span>.</p></div>
+<div class="math-passage"><p>At the <span class="math inline" data-tex="(j+1)">\((j+1)\)</span>th iteration, we
+compute </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+Q(\theta|\theta^{(j)})&amp;=\Bigg\{-\frac{1}{2\sigma^2}\sum_{i=1}^nE\left[(Y_i-\beta^{\mathrm{T}}Z_i)^2|D_{\mathrm{obs}};\theta^{(j)}\right]-\frac{n}{2}\log\sigma^2\Bigg\}\\
+&amp;
++\Bigg\{-\frac{1}{2}\sum_{i=1}^n\sum_{l=1}^p\sum_{k=1}^p\sigma_z^{l,k}E[(Z_{il}-\mu_l)(Z_{ik}-\mu_k)|D_{\mathrm{obs}};\theta^{(j)}]\\
+&amp; -\frac{n}{2}\log\det\Sigma\Bigg\}\\
+&amp;=:Q_1(\theta|\theta^{(j)})+Q_2(\theta|\theta^{(j)}).
+\end{aligned}">\[\begin{aligned}
+Q(\theta|\theta^{(j)})&amp;=\Bigg\{-\frac{1}{2\sigma^2}\sum_{i=1}^nE\left[(Y_i-\beta^{\mathrm{T}}Z_i)^2|D_{\mathrm{obs}};\theta^{(j)}\right]-\frac{n}{2}\log\sigma^2\Bigg\}\\
+&amp;
++\Bigg\{-\frac{1}{2}\sum_{i=1}^n\sum_{l=1}^p\sum_{k=1}^p\sigma_z^{l,k}E[(Z_{il}-\mu_l)(Z_{ik}-\mu_k)|D_{\mathrm{obs}};\theta^{(j)}]\\
+&amp; -\frac{n}{2}\log\det\Sigma\Bigg\}\\
+&amp;=:Q_1(\theta|\theta^{(j)})+Q_2(\theta|\theta^{(j)}).
+\end{aligned}\]</span></div><p> The conditional expectations of the square terms
+can be calculated by partitioning into (conditional) variance and
+bias.</p></div>
+<div class="math-passage"><p>Consequently, </p><div class="math-block"><span class="math display" data-tex="Q_1(\theta\mid
+\theta^{(j)})=-\frac{1}{2\sigma^2}\sum_{i=1}^n\Big((Y_i-\beta^{\mathrm{T}}\widehat
+Z_i^{(j)})^2
++\beta^{\mathrm{T}}\widehat
+C_i^{(j)}\beta\Big)-\frac{n}{2}\log\sigma^2,">\[Q_1(\theta\mid
+\theta^{(j)})=-\frac{1}{2\sigma^2}\sum_{i=1}^n\Big((Y_i-\beta^{\mathrm{T}}\widehat
+Z_i^{(j)})^2
++\beta^{\mathrm{T}}\widehat
+C_i^{(j)}\beta\Big)-\frac{n}{2}\log\sigma^2,\]</span></div><p> where </p><div class="math-block"><span class="math display" data-tex="\begin{gathered}\widehat
+Z_i^{(j)}=E[Z_i|Y_i,M_i(Z_i);\theta^{(j)}]\\[6pt]
+\mbox{ and }\widehat C_i^{(j)}=\operatorname{Var}\left[Z_i\Big|Y_i,
+M_i(Z_i);\theta^{(j)}\right].\end{gathered}">\[\begin{gathered}\widehat
+Z_i^{(j)}=E[Z_i|Y_i,M_i(Z_i);\theta^{(j)}]\\[6pt]
+\mbox{ and }\widehat C_i^{(j)}=\operatorname{Var}\left[Z_i\Big|Y_i,
+M_i(Z_i);\theta^{(j)}\right].\end{gathered}\]</span></div><p> Thus, the E step
+fills in the missing components of <span class="math inline" data-tex="Z_i">\(Z_i\)</span> using conditional expectation and
+adds an additional term to account for the filling in.</p></div>
+<div class="math-passage"><p>Similarly, </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+Q_2(\theta\mid
+\theta^{(j)})&amp;=-\frac{1}{2}\sum_{i=1}^n\sum_{l=1}^p\sum_{k=1}^p\sigma_z^{l,k}\Big((\widehat
+Z_{il}-\mu_l)(\widehat Z_{ik}-\mu_k)+\widehat
+c_{ikl}^{(j)}\Big)-\frac{n}{2}\log\det\Sigma\\
+&amp;=-\frac{1}{2}tr\Bigg\{\sum_{i=1}^n\Big((\widehat
+Z_i^{(j)}-\mu)^{\otimes 2}+\widehat
+C_i^{(j)}\Big)\Sigma^{-1}\Bigg\}-\frac{n}{2}\log\det\Sigma,
+\end{aligned}">\[\begin{aligned}
+Q_2(\theta\mid
+\theta^{(j)})&amp;=-\frac{1}{2}\sum_{i=1}^n\sum_{l=1}^p\sum_{k=1}^p\sigma_z^{l,k}\Big((\widehat
+Z_{il}-\mu_l)(\widehat Z_{ik}-\mu_k)+\widehat
+c_{ikl}^{(j)}\Big)-\frac{n}{2}\log\det\Sigma\\
+&amp;=-\frac{1}{2}tr\Bigg\{\sum_{i=1}^n\Big((\widehat
+Z_i^{(j)}-\mu)^{\otimes 2}+\widehat
+C_i^{(j)}\Big)\Sigma^{-1}\Bigg\}-\frac{n}{2}\log\det\Sigma,
+\end{aligned}\]</span></div><p> where <span class="math inline" data-tex="\widehat
+c_{ikl}^{(j)}">\(\widehat
+c_{ikl}^{(j)}\)</span> is the <span class="math inline" data-tex="(k,l)">\((k,l)\)</span>th element of <span class="math inline" data-tex="\widehat C_i^{(j)}">\(\widehat C_i^{(j)}\)</span>. In the M step, we can
+maximize <span class="math inline" data-tex="Q_1">\(Q_1\)</span> and <span class="math inline" data-tex="Q_2">\(Q_2\)</span> separately since the parameters <span class="math inline" data-tex="(\beta,\sigma^2)">\((\beta,\sigma^2)\)</span> are distinct from <span class="math inline" data-tex="(\mu,\Sigma)">\((\mu,\Sigma)\)</span>. The maximizations are
+similar to the full data cases.</p></div>
+<div class="math-passage"><p>Maximizing <span class="math inline" data-tex="Q_1">\(Q_1\)</span> w.r.t. <span class="math inline" data-tex="(\beta,\sigma^2)">\((\beta,\sigma^2)\)</span> leads to </p><div class="math-block"><span class="math display" data-tex="\beta^{(j+1)}=\Bigg(\sum_{i=1}^n\Big(\widehat
+Z_i^{(j){\otimes 2}}+\widehat
+C_i^{(j)}\Big)\Bigg)^{-1}\sum_{i=1}^n\widehat Z_i^{(j)}Y_i,">\[\beta^{(j+1)}=\Bigg(\sum_{i=1}^n\Big(\widehat
+Z_i^{(j){\otimes 2}}+\widehat
+C_i^{(j)}\Big)\Bigg)^{-1}\sum_{i=1}^n\widehat Z_i^{(j)}Y_i,\]</span></div><div class="math-block"><span class="math display" data-tex="{\sigma^2}^{(j+1)}=n^{-1}\sum_{i=1}^n\Big((Y_i-{\beta^{(j+1)}}^{\mathrm{T}}\widehat
+Z_i^{(j)})^2
++{\beta^{(j+1)}}^{\mathrm{T}}\widehat
+C_i^{(j)}\beta^{(j+1)}\Big).">\[{\sigma^2}^{(j+1)}=n^{-1}\sum_{i=1}^n\Big((Y_i-{\beta^{(j+1)}}^{\mathrm{T}}\widehat
+Z_i^{(j)})^2
++{\beta^{(j+1)}}^{\mathrm{T}}\widehat
+C_i^{(j)}\beta^{(j+1)}\Big).\]</span></div><p> Maximizing <span class="math inline" data-tex="Q_2">\(Q_2\)</span> w.r.t. <span class="math inline" data-tex="(\mu,\Sigma)">\((\mu,\Sigma)\)</span> leads to </p><div class="math-block"><span class="math display" data-tex="\mu^{(j+1)}=n^{-1}\sum_{i=1}^n\widehat
+Z_i^{(j)},">\[\mu^{(j+1)}=n^{-1}\sum_{i=1}^n\widehat
+Z_i^{(j)},\]</span></div><div class="math-block"><span class="math display" data-tex="\Sigma^{(j+1)}=n^{-1}\sum_{i=1}^n\Big((\widehat
+Z_i^{(j)}-\mu^{(j+1)})^{\otimes 2}+\widehat C_i^{(j)}\Big).">\[\Sigma^{(j+1)}=n^{-1}\sum_{i=1}^n\Big((\widehat
+Z_i^{(j)}-\mu^{(j+1)})^{\otimes 2}+\widehat C_i^{(j)}\Big).\]</span></div></div>
+<div class="math-passage"><p>The intercept component <span class="math inline" data-tex="Z_0=1">\(Z_0=1\)</span> is
+deterministic. Its conditional variance and covariance with other
+components are zero; the covariance model for the random covariates
+excludes this intercept. For any incomplete record, partition the joint
+normal vector into observed and missing coordinates. The usual normal
+conditioning formula supplies the conditional mean vector and covariance
+matrix. The update requires </p><div class="math-block"><span class="math display" data-tex="E(Z_iZ_i^{\mathrm{T}}\mid O_i)=\widehat
+Z_i\widehat Z_i^{\mathrm{T}}+\widehat C_i.">\[E(Z_iZ_i^{\mathrm{T}}\mid O_i)=\widehat
+Z_i\widehat Z_i^{\mathrm{T}}+\widehat C_i.\]</span></div><p> Omitting <span class="math inline" data-tex="\widehat C_i">\(\widehat C_i\)</span> is deterministic mean
+imputation, not the EM likelihood calculation. In particular it changes
+the normal equations and generally understates residual uncertainty.</p></div>
+<h2 id="section-11">2.11 Categorical covariates</h2>
+<p>For categorical covariates the integral becomes a finite weighted
+sum. Each incomplete subject generates one candidate row for every
+compatible covariate vector, with the same response but different
+covariates. The weights sum to one within subject. Weighted least
+squares updates the response regression, and weighted category
+frequencies or another covariate model update the distribution of the
+covariates.</p>
+<div class="math-passage"><p>We then consider the linear regression model where the covariates are
+binary indicators. Let <span class="math inline" data-tex="p(z\mid
+\alpha)">\(p(z\mid
+\alpha)\)</span> denote the covariate distribution of <span class="math inline" data-tex="Z">\(Z\)</span>. For example, for the saturated model,
+<span class="math inline" data-tex="Z">\(Z\)</span> can be viewed as multinomial with
+<span class="math inline" data-tex="2^p">\(2^p\)</span> categories. The full data
+log-likelihood is thus </p><div class="math-block"><span class="math display" data-tex="l_n(D;\theta)=-\frac{1}{2\sigma^2}\sum_{i=1}^n(Y_i-\beta^{\mathrm{T}}Z_i)^2-\frac{n}{2}\log\sigma^2+\sum_{i=1}^n
+\log p(Z_i;\alpha).">\[l_n(D;\theta)=-\frac{1}{2\sigma^2}\sum_{i=1}^n(Y_i-\beta^{\mathrm{T}}Z_i)^2-\frac{n}{2}\log\sigma^2+\sum_{i=1}^n
+\log p(Z_i;\alpha).\]</span></div></div>
+<div class="math-passage"><p>Denote <span class="math inline" data-tex="\mathcal Z=\{z_k:
+k=1,\cdots,m\}">\(\mathcal Z=\{z_k:
+k=1,\cdots,m\}\)</span> as the set of possible values of the binary
+vector <span class="math inline" data-tex="Z">\(Z\)</span>. Of course, <span class="math inline" data-tex="m\leq 2^p">\(m\leq 2^p\)</span>. Let <span class="math inline" data-tex="\mathcal C_{i}">\(\mathcal C_{i}\)</span> denote the set of all
+possible <span class="math inline" data-tex="z_k">\(z_k\)</span>s that are “compatible”
+with the observed values <span class="math inline" data-tex="M_i(Z_i)">\(M_i(Z_i)\)</span>
+of the <span class="math inline" data-tex="i">\(i\)</span>th subject. That is </p><div class="math-block"><span class="math display" data-tex="\mathcal C_{i}=\{z\in\mathcal
+Z:M_i(z)=M_i(Z_i)\}.">\[\mathcal C_{i}=\{z\in\mathcal
+Z:M_i(z)=M_i(Z_i)\}.\]</span></div><p> So, <span class="math inline" data-tex="\mathcal
+C_{i}">\(\mathcal
+C_{i}\)</span> contains all possibilities for the full covariate vector
+<span class="math inline" data-tex="Z_i">\(Z_i\)</span> given the observed part <span class="math inline" data-tex="M_i(Z_i)">\(M_i(Z_i)\)</span>. At the <span class="math inline" data-tex="(j+1)">\((j+1)\)</span>th iteration, we compute </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+Q(\theta|\theta^{(j)})&amp;=-\frac{1}{2\sigma^2}\sum_{i=1}^nE\left[(Y_i-\beta^{\mathrm{T}}Z_i)^2\Big|Y_i,M_i(Z_i);\theta^{(j)}\right]-\frac{n}{2}\log\sigma^2\\
+&amp; +\sum_{i=1}^n E\left[\log
+p(Z_i;\alpha)\Big|Y_i,M_i(Z_i);\theta^{(j)}\right].
+\end{aligned}">\[\begin{aligned}
+Q(\theta|\theta^{(j)})&amp;=-\frac{1}{2\sigma^2}\sum_{i=1}^nE\left[(Y_i-\beta^{\mathrm{T}}Z_i)^2\Big|Y_i,M_i(Z_i);\theta^{(j)}\right]-\frac{n}{2}\log\sigma^2\\
+&amp; +\sum_{i=1}^n E\left[\log
+p(Z_i;\alpha)\Big|Y_i,M_i(Z_i);\theta^{(j)}\right].
+\end{aligned}\]</span></div></div>
+<div class="math-passage"><p>Note that because <span class="math inline" data-tex="Z">\(Z\)</span> is
+categorical, the conditional expectations can be written as a weighted
+sum of all possible values of the expectands. Consequently, </p><div class="math-block"><span class="math display" data-tex="\begin{aligned}
+Q(\theta\mid
+\theta^{(j)})&amp;=-\frac{1}{2\sigma^2}\sum_{i=1}^n\sum_{z_k\in\mathcal
+C_i}w_{ik}^{(j)}(Y_i-\beta^{\mathrm{T}}z_k)^2-\frac{n}{2}\log\sigma^2\\
+&amp; +\sum_{i=1}^n\sum_{z_k\in\mathcal C_i} w_{ik}^{(j)}\log
+p(z_k;\alpha),
+\end{aligned}">\[\begin{aligned}
+Q(\theta\mid
+\theta^{(j)})&amp;=-\frac{1}{2\sigma^2}\sum_{i=1}^n\sum_{z_k\in\mathcal
+C_i}w_{ik}^{(j)}(Y_i-\beta^{\mathrm{T}}z_k)^2-\frac{n}{2}\log\sigma^2\\
+&amp; +\sum_{i=1}^n\sum_{z_k\in\mathcal C_i} w_{ik}^{(j)}\log
+p(z_k;\alpha),
+\end{aligned}\]</span></div><p> where </p><div class="math-block"><span class="math display" data-tex="w_{ik}^{(j)}=\frac{f(Y_i|z_k;\beta^{(j)},{\sigma^2}^{(j)})p(z_k;\alpha^{(j)})}{\sum_{k'\in\mathcal
+C_i}f(Y_i|z_{k'};\beta^{(j)},{\sigma^2}^{(j)})p(z_{k'};\alpha^{(j)})}.">\[w_{ik}^{(j)}=\frac{f(Y_i|z_k;\beta^{(j)},{\sigma^2}^{(j)})p(z_k;\alpha^{(j)})}{\sum_{k'\in\mathcal
+C_i}f(Y_i|z_{k'};\beta^{(j)},{\sigma^2}^{(j)})p(z_{k'};\alpha^{(j)})}.\]</span></div></div>
+<div class="math-passage"><p>In fact, the E-step for any regression model with missing categorical
+covariates can be written as a weighted sum of the full data
+log-likelihood (Ibrahim, 1990). The form of <span class="math inline" data-tex="Q(\theta\mid \theta^{(j)})">\(Q(\theta\mid \theta^{(j)})\)</span> gives a
+weighted least squares problem for the M step. It is easy to obtain
+</p><div class="math-block"><span class="math display" data-tex="\beta^{(j+1)}=\left(\sum_{i=1}^n\sum_{z_k\in\mathcal
+C_i}w_{ik}^{(j)}z_k^{\otimes
+2}\right)^{-1}\left(\sum_{i=1}^n\sum_{z_k\in\mathcal C_i}w_{ik}^{(j)}z_k
+Y_i\right),">\[\beta^{(j+1)}=\left(\sum_{i=1}^n\sum_{z_k\in\mathcal
+C_i}w_{ik}^{(j)}z_k^{\otimes
+2}\right)^{-1}\left(\sum_{i=1}^n\sum_{z_k\in\mathcal C_i}w_{ik}^{(j)}z_k
+Y_i\right),\]</span></div><p> and </p><div class="math-block"><span class="math display" data-tex="{\sigma^2}^{(j+1)}=n^{-1}\sum_{i=1}^n\sum_{z_k\in\mathcal
+C_i}w_{ik}^{(j)}(Y_i-{\beta^{(j+1)}}^{\mathrm{T}}z_k)^2.">\[{\sigma^2}^{(j+1)}=n^{-1}\sum_{i=1}^n\sum_{z_k\in\mathcal
+C_i}w_{ik}^{(j)}(Y_i-{\beta^{(j+1)}}^{\mathrm{T}}z_k)^2.\]</span></div></div>
+<div class="math-passage"><p>The M step for <span class="math inline" data-tex="\alpha">\(\alpha\)</span> solves the
+following weighted score function </p><div class="math-block"><span class="math display" data-tex="n^{-1}\sum_{i=1}^n\sum_{z_k\in\mathcal
+C_i}w_{ik}^{(j)}\dot l_\alpha(z_k;\alpha)=0,">\[n^{-1}\sum_{i=1}^n\sum_{z_k\in\mathcal
+C_i}w_{ik}^{(j)}\dot l_\alpha(z_k;\alpha)=0,\]</span></div><p> where <span class="math inline" data-tex="\dot
+l_\alpha(z;\alpha)=\frac{\partial}{\partial\alpha}\log
+p(z;\alpha)">\(\dot
+l_\alpha(z;\alpha)=\frac{\partial}{\partial\alpha}\log
+p(z;\alpha)\)</span>. In the case of a saturated model for all <span class="math inline" data-tex="2^p">\(2^p\)</span> categories of <span class="math inline" data-tex="Z">\(Z\)</span>, there is a closed-form solution for
+the M step of <span class="math inline" data-tex="\alpha">\(\alpha\)</span>. Let <span class="math inline" data-tex="\alpha_k=\operatorname{Pr}(Z=k)">\(\alpha_k=\operatorname{Pr}(Z=k)\)</span>. This
+gives </p><div class="math-block"><span class="math display" data-tex="\alpha_k^{(j+1)}=n^{-1}\sum_{i=1}^n
+I(z_k\in\mathcal C_i)w_{ik}^{(j)}.">\[\alpha_k^{(j+1)}=n^{-1}\sum_{i=1}^n
+I(z_k\in\mathcal C_i)w_{ik}^{(j)}.\]</span></div></div>
+<div class="math-passage"><p>To find a variance estimator for the MLE, Ibrahim (1990) recommends
+the Louis formula. To simplify the derivatives, we make the
+transformation <span class="math inline" data-tex="\tau=1/\sigma^2">\(\tau=1/\sigma^2\)</span>. So
+<span class="math inline" data-tex="\theta=(\beta^{\mathrm{T}},\tau,\alpha^{\mathrm{T}})^{\mathrm{T}}">\(\theta=(\beta^{\mathrm{T}},\tau,\alpha^{\mathrm{T}})^{\mathrm{T}}\)</span>.
+For a single observation of full data, </p><div class="math-block"><span class="math display" data-tex="\dot
+l(Y,Z;\theta)=\begin{pmatrix}\tau
+Z(Y-\beta^{\mathrm{T}}Z)\\\frac1{2\tau}-\frac12(Y-\beta^{\mathrm{T}}Z)^2\\\dot
+l_\alpha(Z;\alpha)\end{pmatrix}.">\[\dot
+l(Y,Z;\theta)=\begin{pmatrix}\tau
+Z(Y-\beta^{\mathrm{T}}Z)\\\frac1{2\tau}-\frac12(Y-\beta^{\mathrm{T}}Z)^2\\\dot
+l_\alpha(Z;\alpha)\end{pmatrix}.\]</span></div><p> and </p><div class="math-block"><span class="math display" data-tex="-\ddot l(Y,Z;\theta)=\begin{pmatrix}\tau
+ZZ^{\mathrm{T}}&amp;-Z(Y-\beta^{\mathrm{T}}Z)&amp;0\\-(Y-\beta^{\mathrm{T}}Z)Z^{\mathrm{T}}&amp;1/(2\tau^2)&amp;0\\0&amp;0&amp;-\ddot
+l_\alpha(Z;\alpha)\end{pmatrix}.">\[-\ddot l(Y,Z;\theta)=\begin{pmatrix}\tau
+ZZ^{\mathrm{T}}&amp;-Z(Y-\beta^{\mathrm{T}}Z)&amp;0\\-(Y-\beta^{\mathrm{T}}Z)Z^{\mathrm{T}}&amp;1/(2\tau^2)&amp;0\\0&amp;0&amp;-\ddot
+l_\alpha(Z;\alpha)\end{pmatrix}.\]</span></div></div>
+<div class="math-passage"><p>Using column-vector scores, the same derivatives have the
+particularly clear form </p><div class="math-block"><span class="math display" data-tex="S_\beta=\tau
+Z(Y-Z^{\mathrm{T}}\beta),\qquad
+S_\tau=\frac{1}{2\tau}-\frac12(Y-Z^{\mathrm{T}}\beta)^2,">\[S_\beta=\tau
+Z(Y-Z^{\mathrm{T}}\beta),\qquad
+S_\tau=\frac{1}{2\tau}-\frac12(Y-Z^{\mathrm{T}}\beta)^2,\]</span></div><p> and
+the negative Hessian blocks are </p><div class="math-block"><span class="math display" data-tex="\begin{gathered}I_{\beta\beta}=\tau
+ZZ^{\mathrm{T}}\\[6pt]
+I_{\beta\tau}=-Z(Y-Z^{\mathrm{T}}\beta)\\[6pt]
+I_{\tau\beta}=I_{\beta\tau}^{\mathrm{T}}\\[6pt]
+I_{\tau\tau}=\frac{1}{2\tau^2}.\end{gathered}">\[\begin{gathered}I_{\beta\beta}=\tau
+ZZ^{\mathrm{T}}\\[6pt]
+I_{\beta\tau}=-Z(Y-Z^{\mathrm{T}}\beta)\\[6pt]
+I_{\tau\beta}=I_{\beta\tau}^{\mathrm{T}}\\[6pt]
+I_{\tau\tau}=\frac{1}{2\tau^2}.\end{gathered}\]</span></div><p> The transpose in
+the mixed blocks makes the Hessian symmetric, as required. At the fitted
+parameter, average these quantities and their score outer products over
+the compatible rows, then apply Louis’s identity.</p></div>
+<div class="math-passage"><p>Computation of conditional expectations is facilitated by observing
+the fact that, for any function <span class="math inline" data-tex="g(Y_i,Z_i;\widehat\theta)">\(g(Y_i,Z_i;\widehat\theta)\)</span>, </p><div class="math-block"><span class="math display" data-tex="E[g(Y_i,Z_i;\widehat\theta)\mid
+Y_i,M_i(Z_i);\widehat\theta]=\sum_{z_k\in\mathcal C_i}\widehat
+w_{ik}g(Y_i,z_k;\widehat\theta),">\[E[g(Y_i,Z_i;\widehat\theta)\mid
+Y_i,M_i(Z_i);\widehat\theta]=\sum_{z_k\in\mathcal C_i}\widehat
+w_{ik}g(Y_i,z_k;\widehat\theta),\]</span></div><p> where <span class="math inline" data-tex="\widehat w_{ik}">\(\widehat w_{ik}\)</span> is the expression of
+<span class="math inline" data-tex="w_{ik}^{(j)}">\(w_{ik}^{(j)}\)</span> with <span class="math inline" data-tex="\theta^{(j)}">\(\theta^{(j)}\)</span> replaced by <span class="math inline" data-tex="\widehat\theta">\(\widehat\theta\)</span>. The information can thus
+be estimated by the Louis formula using (<span class="math inline" data-tex="\ref{eq:louis}">\(\ref{eq:louis}\)</span>).</p></div>
+<h2 id="section-12">2.12 Mixed continuous
+and categorical covariates</h2>
+<div class="math-passage"><p>It also frequently occurs that the covariates are a mixed of
+continuous and categorical variables. Let <span class="math inline" data-tex="Z">\(Z\)</span> be a vector of continuous variables and
+<span class="math inline" data-tex="\widetilde Z">\(\widetilde Z\)</span> be a vector of binary
+variables. The linear regression model is </p><div class="math-block"><span class="math display" data-tex="Y=\beta^{\mathrm{T}}Z+\widetilde\beta^{\mathrm{T}}\widetilde
+Z+\epsilon.">\[Y=\beta^{\mathrm{T}}Z+\widetilde\beta^{\mathrm{T}}\widetilde
+Z+\epsilon.\]</span></div><p> When components of both <span class="math inline" data-tex="Z">\(Z\)</span> and <span class="math inline" data-tex="\widetilde Z">\(\widetilde Z\)</span> are subject to missingness,
+we need to have a joint model for <span class="math inline" data-tex="(Z,\widetilde Z)">\((Z,\widetilde Z)\)</span> in order to compute the
+MLE for <span class="math inline" data-tex="\beta">\(\beta\)</span> and <span class="math inline" data-tex="\widetilde\beta">\(\widetilde\beta\)</span>. In such cases, it is
+convenient to model the joint distribution of <span class="math inline" data-tex="(Z,\widetilde Z)">\((Z,\widetilde Z)\)</span> by a normal mixture:
+</p><div class="math-block"><span class="math display" data-tex="p(Z,\widetilde Z;\alpha)=p(Z\mid \widetilde
+Z; \alpha_1)p(\widetilde Z;\alpha_2),">\[p(Z,\widetilde Z;\alpha)=p(Z\mid \widetilde
+Z; \alpha_1)p(\widetilde Z;\alpha_2),\]</span></div><p> where <span class="math inline" data-tex="Z\mid \widetilde Z=z_k\sim
+N(\mu_k,\Sigma_k)">\(Z\mid \widetilde Z=z_k\sim
+N(\mu_k,\Sigma_k)\)</span>.</p></div>
+<p>Clearly, <span class="math inline" data-tex="(Y,Z^{\mathrm{T}})^{\mathrm{T}}">\((Y,Z^{\mathrm{T}})^{\mathrm{T}}\)</span> is
+multivariate normal conditioning on each category of <span class="math inline" data-tex="\widetilde Z">\(\widetilde Z\)</span>. It is easy to use the
+techniques in the previous two cases to derive the EM algorithm for the
+case of mixed covariates, where both the E and M steps also have
+closed-form solutions. The details are left as an exercise.</p>
+<h3 id="completing-the-mixed-covariate-construction">Completing the
+mixed-covariate construction</h3>
+<div class="math-passage"><p>Let <span class="math inline" data-tex="C">\(C\)</span> denote the categorical
+part and <span class="math inline" data-tex="Z">\(Z\)</span> the continuous part,
+with <span class="math inline" data-tex="Z\mid C=k\sim
+N(\mu_k,\Sigma_k)">\(Z\mid C=k\sim
+N(\mu_k,\Sigma_k)\)</span> and <span class="math inline" data-tex="P(C=k)=\alpha_k">\(P(C=k)=\alpha_k\)</span>. The E step has two
+nested calculations. First compute the posterior probability of each
+compatible category: </p><div class="math-block"><span class="math display" data-tex="w_{ik}\propto\alpha_k\,f(Y_i,Z_{i,\mathrm{obs}}\mid
+C=k;\theta^{(j)}),
+\qquad\sum_{k\in\mathcal C_i}w_{ik}=1.">\[w_{ik}\propto\alpha_k\,f(Y_i,Z_{i,\mathrm{obs}}\mid
+C=k;\theta^{(j)}),
+\qquad\sum_{k\in\mathcal C_i}w_{ik}=1.\]</span></div><p> Within each category use
+normal conditioning to obtain <span class="math inline" data-tex="m_{ik}=E(Z_i\mid O_i,C=k)">\(m_{ik}=E(Z_i\mid O_i,C=k)\)</span> and <span class="math inline" data-tex="V_{ik}=\operatorname{Var}(Z_i\mid
+O_i,C=k)">\(V_{ik}=\operatorname{Var}(Z_i\mid
+O_i,C=k)\)</span>. Every sufficient statistic is then averaged twice,
+for example </p><div class="math-block"><span class="math display" data-tex="E(Z_i\mid O_i)=\sum_k
+w_{ik}m_{ik},\qquad
+E(Z_iZ_i^{\mathrm{T}}\mid O_i)=\sum_k
+w_{ik}(V_{ik}+m_{ik}m_{ik}^{\mathrm{T}}).">\[E(Z_i\mid O_i)=\sum_k
+w_{ik}m_{ik},\qquad
+E(Z_iZ_i^{\mathrm{T}}\mid O_i)=\sum_k
+w_{ik}(V_{ik}+m_{ik}m_{ik}^{\mathrm{T}}).\]</span></div><p> With <span class="math inline" data-tex="N_k=\sum_iw_{ik}">\(N_k=\sum_iw_{ik}\)</span>, update <span class="math inline" data-tex="\alpha_k=N_k/n">\(\alpha_k=N_k/n\)</span>, <span class="math inline" data-tex="\mu_k=N_k^{-1}\sum_iw_{ik}m_{ik}">\(\mu_k=N_k^{-1}\sum_iw_{ik}m_{ik}\)</span>, and
+</p><div class="math-block"><span class="math display" data-tex="\Sigma_k=N_k^{-1}\sum_iw_{ik}\{V_{ik}+(m_{ik}-\mu_k)(m_{ik}-\mu_k)^{\mathrm{T}}\}.">\[\Sigma_k=N_k^{-1}\sum_iw_{ik}\{V_{ik}+(m_{ik}-\mu_k)(m_{ik}-\mu_k)^{\mathrm{T}}\}.\]</span></div><p>
+For the response regression, form the complete design vector containing
+both <span class="math inline" data-tex="Z">\(Z\)</span> and the category indicators,
+compute its conditional first and second moments by the same averaging,
+and use the normal-regression updates above. This completes the exercise
+and shows how the continuous and discrete cases fit together.</p></div>
+<h2 id="section-13">2.13 References</h2>
+<p>Clarke, C. A. (1959). Distribution of ABO blood groups and the
+secretor status in duodenal ulcer families. Digestion, 92, 99-103.</p>
+<p>Dempster, A. P., Laird, N. M., &amp; Rubin, D. B. (1977). Maximum
+likelihood from incomplete data via the EM algorithm. Journal of the
+Royal Statistical Society, Series B, 1-38.</p>
+<p>Ibrahim, J. G. (1990). Incomplete data in generalized linear models.
+Journal of the American Statistical Association, 85, 765-769.</p>
+<p>Louis, T. A. (1982). Finding the observed information matrix when
+using the EM algorithm. Journal of the Royal Statistical Society. Series
+B, 226-233.</p>
+</article><nav aria-label="Adjacent chapters" class="page-turn"><a href="chapter-1.html">← Previous chapter</a><a href="chapter-3.html">Next chapter →</a></nav><section aria-labelledby="comments-title" class="comments" id="comments"><p class="eyebrow">DISCUSSION</p><h2 id="comments-title">Comments and questions</h2><p>Share questions, corrections, and suggestions about this chapter or the book.</p><div aria-live="polite" id="giscus-comments"></div></section><footer><span>Missing Data: Foundations and Methods</span><nav aria-label="Course resources"><a href="index.html">Course overview</a><a href="index.html#chapters">Lecture slides</a></nav></footer></main><aside class="on-page"><p class="nav-label">IN THIS CHAPTER</p><a href="#section-1">2.1 The EM construction</a><a href="#section-2">2.2 Allele frequencies from
+blood types</a><a href="#section-3">2.3 Finite normal mixtures</a><a href="#section-4">2.4 Why EM increases the
+likelihood</a><a href="#section-5">2.5 Observed
+information and the Louis identity</a><a href="#section-6">2.6 Standard errors for
+allele frequencies</a><a href="#section-7">2.7 Coarsening and exponential
+families</a><a href="#section-8">2.8 Grouped multinomial
+observations</a><a href="#section-9">2.9 Regression with missing
+covariates</a><a href="#section-10">2.10 Continuous covariates</a><a href="#section-11">2.11 Categorical covariates</a><a href="#section-12">2.12 Mixed continuous
+and categorical covariates</a><a href="#section-13">2.13 References</a></aside></div></body></html>

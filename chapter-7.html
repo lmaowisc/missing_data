@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1" name="viewport"/><title>Conclusion · Missing Data: Foundations and Methods</title><meta content="Lecture slides and chapter notes for Missing Data: Foundations and Methods, by Lu Mao." name="description"/><link href="style.css" rel="stylesheet"/><link href="favicon.svg" rel="icon" type="image/svg+xml"/><script defer="" src="math-config.js"></script><script defer="" src="vendor/tex-svg-full.js"></script><script defer="" src="comments.js"></script></head>
+<body data-chapter="7"><a class="skip" href="#main">Skip to content</a><header><a class="brand" href="index.html">Missing Data: <span>Foundations and Methods</span></a></header><div class="layout"><aside class="sidebar"><a class="overview" href="index.html">Course overview</a><p class="nav-label">CHAPTERS</p><nav aria-label="Chapters"><a class="chapter-link" href="chapter-1.html"><span>01</span>Introduction</a><a class="chapter-link" href="chapter-2.html"><span>02</span>The EM algorithm</a><a class="chapter-link" href="chapter-3.html"><span>03</span>Regression with missing covariates</a><a class="chapter-link" href="chapter-4.html"><span>04</span>Advanced topics in EM</a><a class="chapter-link" href="chapter-5.html"><span>05</span>Multiple imputation &amp; Bayesian analysis</a><a class="chapter-link" href="chapter-6.html"><span>06</span>The estimating equation approach</a><a aria-current="page" class="chapter-link active" href="chapter-7.html"><span>07</span>Conclusion</a></nav></aside><main id="main"><div class="eyebrow">CHAPTER 07</div><h1 class="chapter-title">Conclusion</h1><p class="lead">Reconnect the assumptions, algorithms, and inferential ideas developed throughout the course.</p><div class="slide-bar"><div><strong>Lecture slides</strong><span>A companion to the chapter · PDF</span></div><a class="button" href="slides/chapter-7.pdf">Open slides ↗</a></div><details class="chapter-contents"><summary>Contents of this chapter</summary><nav aria-label="Chapter contents"><a href="#section-1">7.1 The assumptions behind
+identification</a><a href="#section-2">7.2 Comparing likelihood-based
+methods</a><a href="#section-3">7.3 Weighting and double
+robustness</a><a href="#section-4">7.4 Further reading</a><a href="#section-5">7.5 References</a></nav></details><article class="book-content"><h2 id="section-1">7.1 The assumptions behind
+identification</h2>
+<p>The preceding chapters approach the same problem through different
+mathematical objects: an observed-data likelihood, a posterior
+distribution, or an estimating equation. This final chapter places those
+objects in one argument. The first question is what identifies the
+target from the observed records. The second is which model restrictions
+are acceptable. Only then does the choice of an optimization,
+simulation, or weighting algorithm become meaningful.</p>
+<p>Keep the running example <span class="math inline" data-tex="O=(X,R,RY)">\(O=(X,R,RY)\)</span>, where <span class="math inline" data-tex="X">\(X\)</span> is fully observed and <span class="math inline" data-tex="\theta=EY">\(\theta=EY\)</span>. Write <span class="math inline" data-tex="\pi_0(x,y)=P(R=1\mid X=x,Y=y)">\(\pi_0(x,y)=P(R=1\mid X=x,Y=y)\)</span>. Under MAR
+it reduces to <span class="math inline" data-tex="\pi_0(x)">\(\pi_0(x)\)</span>; under MCAR
+it is constant. These statements refer to the actual observation process
+in relation to the chosen full data, not to whether a missingness
+pattern looks irregular in a spreadsheet.</p>
+<p>The three missingness mechanisms place progressively weaker
+restrictions on the observation process. MCAR requires independence from
+both recorded and unrecorded values; MAR permits dependence on recorded
+information; NMAR allows additional dependence on unavailable values.
+Under MCAR, complete cases form a random subsample, so a valid full-data
+procedure remains valid when applied to them. Randomly selecting a
+subset for full measurement provides a clear example. Accidental loss of
+records has the same interpretation only if the loss is actually
+independent of the variables under study.</p>
+<p>Validity does not make complete-case analysis fully informative. Even
+under MCAR, an incomplete record may contain information about marginal
+distributions or parameter components, and discarding it can reduce
+precision. Treating MCAR within the broader MAR framework allows that
+partial information to contribute. Under MAR, however, complete cases
+can have a different marginal composition from the population. Methods
+must then account for the observed variables on which selection depends;
+applying an arbitrary full-data procedure to complete cases no longer
+has a general justification.</p>
+<p>Likelihood factorization provides one route to using all recorded
+information under MAR. With distinct parameters and the relevant
+ignorability conditions, inference for the data model can use the
+observed-data likelihood without specifying the response mechanism. Its
+integrals over unavailable values explain why EM and posterior
+simulation recur throughout the course. Under NMAR, the
+response-mechanism factor generally remains inside those integrals. The
+resulting difficulty is not merely that computation becomes more
+involved: unrestricted dependence on unobserved values can also prevent
+the observations from identifying the target.</p>
+<p>Identification asks whether different values of the target can
+produce the same observed-data distribution within the assumed model. If
+they can, an arbitrarily large sample of those observations cannot
+distinguish them. Point identification is therefore a prerequisite for
+consistent point estimation over the model, although bounds, sensitivity
+analysis, and inference using additional information remain possible
+without it. In the two-pattern MAR setting, complete cases represent the
+conditional distribution within levels of the always-observed variables.
+Positivity then permits those conditional distributions to be combined
+with the observed covariate distribution, as established in Chapter
+1.</p>
+<p>Without an identifying restriction, NMAR permits the missing values
+to differ from the observed ones in ways the data do not reveal. A
+useful analysis therefore states which assumptions supply the missing
+information and examines how conclusions change when they are varied.
+One approach begins with MAR and then considers parametric selection
+models for sensitivity analysis. Each such model still needs its own
+identification argument: adding a parameterization does not
+automatically make the target identifiable. The following calculation
+expresses the same issue directly in terms of conditional means.</p>
+<h3 id="an-identification-argument-that-unifies-the-course">An
+identification argument that unifies the course</h3>
+<div class="math-passage"><p>Under MAR and positivity, </p><div class="math-block"><span class="math display" data-tex="p(y\mid
+x)=p(y\mid x,R=1),\qquad \theta=\int\left\{\int y\,p(y\mid
+x,R=1)dy\right\}p(x)dx.">\[p(y\mid
+x)=p(y\mid x,R=1),\qquad \theta=\int\left\{\int y\,p(y\mid
+x,R=1)dy\right\}p(x)dx.\]</span></div><p> Both distributions on the right are
+learned from observed quantities. The same target also satisfies <span class="math inline" data-tex="E\{RY/\pi_0(X)\}=\theta">\(E\{RY/\pi_0(X)\}=\theta\)</span>. These are two
+representations of one identified functional. Outcome regression
+estimates the conditional mean in the first representation; IPW
+estimates the selection probabilities in the second; augmentation
+combines both.</p></div>
+<div class="math-passage"><p>Without MAR, write <span class="math inline" data-tex="m_r(x)=E(Y\mid
+X=x,R=r)">\(m_r(x)=E(Y\mid
+X=x,R=r)\)</span> and <span class="math inline" data-tex="\rho(x)=P(R=1\mid
+X=x)">\(\rho(x)=P(R=1\mid
+X=x)\)</span>. Then </p><div class="math-block"><span class="math display" data-tex="E(Y\mid
+X=x)=\rho(x)m_1(x)+\{1-\rho(x)\}m_0(x).">\[E(Y\mid
+X=x)=\rho(x)m_1(x)+\{1-\rho(x)\}m_0(x).\]</span></div><p> The observed records
+identify <span class="math inline" data-tex="\rho">\(\rho\)</span> and <span class="math inline" data-tex="m_1">\(m_1\)</span>, but not generally <span class="math inline" data-tex="m_0">\(m_0\)</span>. An algorithm cannot supply this
+missing identification. One can impose scientifically supported
+restrictions, use external information, derive bounds, or vary a
+sensitivity parameter such as <span class="math inline" data-tex="m_0(x)-m_1(x)">\(m_0(x)-m_1(x)\)</span>. Nonidentifiability
+prevents point identification under the stated model; it does not
+prevent all useful statistical analysis. Even a restrictive
+normal–logistic selection model requires an explicit identifiability
+check, as Chapter 1 demonstrates.</p></div>
+<h2 id="section-2">7.2 Comparing likelihood-based
+methods</h2>
+<p>The three likelihood-based procedures have related inputs but
+different outputs. Maximum likelihood produces a parameter estimate and
+a sampling covariance. Bayesian inference produces a posterior
+distribution conditional on a prior and model. Multiple imputation
+produces completed datasets whose separate analyses are pooled. A good
+implementation must propagate uncertainty appropriate to its chosen
+output.</p>
+<p>Maximum likelihood, Bayesian analysis, and multiple imputation all
+connect inference to an observed-data model, but they summarize
+uncertainty in different ways. When the observed-data likelihood is
+tractable, it can be optimized directly or combined with a prior. When
+it contains difficult sums or integrals, a completed-data representation
+may make the calculation easier. The incomplete observation is then
+connected to a distribution of possible completions, and complete-data
+methods can be used within an iterative or predictive construction. The
+central requirement is to retain the uncertainty in that connection.</p>
+<p>Replacing missing entries by single estimated values does not
+generally meet that requirement. The conditional distribution of the
+missing values depends on the full-data model and its unknown
+parameters, while estimation of those parameters depends on the
+information available about the missing values. These two dependencies
+form the loop illustrated below. A sound method resolves it by taking
+conditional expectations or by sampling from conditional distributions,
+rather than treating one chosen completion as if it were the original
+dataset. EM and data augmentation implement these alternatives for
+different inferential targets.</p>
+<figure>
+<a aria-label="Open figure at full size" class="figure-link" href="figures/review0.png"><img alt="The triad of missing data, observed data, and parameter.
+Red arrow: imputing the missing data depends on the observed data and
+the parameter; blue arrow: estimating/drawing the parameter depends on
+the full data, i.e., observed and missing data." src="figures/review0.png"/></a>
+<figcaption> The triad of missing data, observed data, and parameter.
+Red arrow: imputing the missing data depends on the observed data and
+the parameter; blue arrow: estimating/drawing the parameter depends on
+the full data, i.e., observed and missing data.</figcaption>
+</figure>
+<p>EM resolves the loop through conditional expectations and
+optimization. In the E step, the current parameter determines the
+distribution of the missing data given the observations; averaging the
+complete-data log likelihood under that distribution produces the <span class="math inline" data-tex="Q">\(Q\)</span> function. In the M step, the candidate
+parameter is varied to maximize <span class="math inline" data-tex="Q">\(Q\)</span>.
+The red and blue arrows in the next figure represent these two
+operations. They act on a function of the missing values, so every
+moment required by that function must be retained. This is why an
+expected quadratic term cannot generally be replaced by the square of an
+expected missing value.</p>
+<figure>
+<a aria-label="Open figure at full size" class="figure-link" href="figures/review1.png"><img alt="The EM solution to the “three-body” problem. Missing
+values, according to how their appear in the full-data log-likelihood,
+are replaced by their conditional expectations given observed data and
+current iterate of the parameter in the E step; the next iterate of
+parameter is derived based on the “imputed” full-data log-likelihood
+(the \(Q\) function) in the M
+step." src="figures/review1.png"/></a>
+<figcaption> The EM solution to the “three-body” problem. Missing
+values, according to how their appear in the full-data log-likelihood,
+are replaced by their conditional expectations given observed data and
+current iterate of the parameter in the E step; the next iterate of
+parameter is derived based on the “imputed” full-data log-likelihood
+(the <span class="math inline" data-tex="Q">\(Q\)</span> function) in the M
+step.</figcaption>
+</figure>
+<div class="math-passage"><p>The essential EM formula is </p><div class="math-block"><span class="math display" data-tex="Q(\theta\mid\theta^{(t)})=E_{\theta^{(t)}}\{\log
+p(D_{\mathrm{obs}},D_{\mathrm{mis}};\theta)\mid
+D_{\mathrm{obs}}\},\qquad
+\theta^{(t+1)}\in\arg\max_\theta Q(\theta\mid\theta^{(t)}).">\[Q(\theta\mid\theta^{(t)})=E_{\theta^{(t)}}\{\log
+p(D_{\mathrm{obs}},D_{\mathrm{mis}};\theta)\mid
+D_{\mathrm{obs}}\},\qquad
+\theta^{(t+1)}\in\arg\max_\theta Q(\theta\mid\theta^{(t)}).\]</span></div><p> The
+current parameter determines the conditional expectation; the candidate
+parameter is varied in the maximization. Conditional second moments and
+cross products must be included whenever the complete-data log
+likelihood contains them. Substituting conditional means into a
+nonlinear expression is not the E step. The increase in observed log
+likelihood follows from the conditional Kullback–Leibler identity
+established in Chapter 2. It gives monotonic ascent, not a guarantee of
+the global maximum. Standard errors require observed information, for
+example through Louis’ identity or supplemented EM, rather than the
+curvature of a completed-data likelihood with imputed values held
+fixed.</p></div>
+<div class="math-passage"><p>Data augmentation uses the same conditional relationships for
+simulation. Under an ignorable model, its two updates are </p><div class="math-block"><span class="math display" data-tex="D_{\mathrm{mis}}\sim p(D_{\mathrm{mis}}\mid
+D_{\mathrm{obs}},\theta)\propto L(D\mid\theta),">\[D_{\mathrm{mis}}\sim p(D_{\mathrm{mis}}\mid
+D_{\mathrm{obs}},\theta)\propto L(D\mid\theta),\]</span></div><div class="math-block"><span class="math display" data-tex="\theta\sim p(\theta\mid
+D_{\mathrm{obs}},D_{\mathrm{mis}})\propto
+L(D\mid\theta)q(\theta).">\[\theta\sim p(\theta\mid
+D_{\mathrm{obs}},D_{\mathrm{mis}})\propto
+L(D\mid\theta)q(\theta).\]</span></div><p> After adequate convergence, retained
+parameter draws describe <span class="math inline" data-tex="[\theta\mid
+D_{\mathrm{obs}}]">\([\theta\mid
+D_{\mathrm{obs}}]\)</span>, while retained missing-value draws describe
+<span class="math inline" data-tex="[D_{\mathrm{mis}}\mid
+D_{\mathrm{obs}}]">\([D_{\mathrm{mis}}\mid
+D_{\mathrm{obs}}]\)</span>. The latter can be combined with the
+unchanged observed values to form imputed datasets. The red and blue
+arrows therefore support both Bayesian inference and multiple
+imputation; the difference is which marginal output is retained and how
+it is subsequently analyzed.</p></div>
+<figure>
+<a aria-label="Open figure at full size" class="figure-link" href="figures/review2.png"><img alt="The Gibbs sampler solution to the “three-body” problem. GS
+A: \([D_{\mathrm{mis}}\mid
+D_{\mathrm{obs}};\theta]\) ; GS B: \([\theta\mid D_{\mathrm{obs}},
+D_{\mathrm{mis}}]\) ." src="figures/review2.png"/></a>
+<figcaption> The Gibbs sampler solution to the “three-body” problem. GS
+A: <span class="math inline" data-tex="[D_{\mathrm{mis}}\mid
+D_{\mathrm{obs}};\theta]">\([D_{\mathrm{mis}}\mid
+D_{\mathrm{obs}};\theta]\)</span>; GS B: <span class="math inline" data-tex="[\theta\mid D_{\mathrm{obs}},
+D_{\mathrm{mis}}]">\([\theta\mid D_{\mathrm{obs}},
+D_{\mathrm{mis}}]\)</span>.</figcaption>
+</figure>
+<p>In data augmentation the same two conditional relationships define a
+Markov chain with invariant joint posterior <span class="math inline" data-tex="p(\theta,D_{\mathrm{mis}}\mid
+D_{\mathrm{obs}})">\(p(\theta,D_{\mathrm{mis}}\mid
+D_{\mathrm{obs}})\)</span>. Marginalizing its retained parameter draws
+gives Bayesian inference; marginalizing its missing-value draws gives
+posterior predictive imputation. A chain must mix adequately, and
+retained draws are generally correlated. Multiple imputation pooling
+additionally requires an appropriate complete-data analysis and
+uncertainty calculation; merely producing several completed files does
+not ensure valid inference.</p>
+<p>Sometimes the simulation can be organized without a long alternating
+loop. A convenient imputation model may permit direct draws of its
+parameters from their observed-data posterior, followed by direct
+conditional draws of the missing values. The imputation map <span class="math inline" data-tex="(D_{\mathrm{obs}},\theta^*)\mapsto
+D_{\mathrm{mis}}">\((D_{\mathrm{obs}},\theta^*)\mapsto
+D_{\mathrm{mis}}\)</span> is then separated from the analysis map <span class="math inline" data-tex="(D_{\mathrm{obs}},D_{\mathrm{mis}})\mapsto\theta">\((D_{\mathrm{obs}},D_{\mathrm{mis}})\mapsto\theta\)</span>.
+The monotone normal-regression construction in Chapter 5 illustrates
+this arrangement. It does not require the imputation and analysis models
+to be written identically, but their relationship still matters for
+validity; computational convenience alone does not establish
+congeniality.</p>
+<figure>
+<a aria-label="Open figure at full size" class="figure-link" href="figures/review3.png"><img alt="Break out of the “three-body” system by using a convenient
+(uncongenial) imputation model, where model parameters can be easily
+estimated based on observed data and the posterior predictive
+distributions have closed forms." src="figures/review3.png"/></a>
+<figcaption> Break out of the “three-body” system by using a convenient
+(uncongenial) imputation model, where model parameters can be easily
+estimated based on observed data and the posterior predictive
+distributions have closed forms.</figcaption>
+</figure>
+<h3 id="a-shared-normal-example">A shared normal example</h3>
+<div class="math-passage"><p>Suppose <span class="math inline" data-tex="Y\mid X\sim
+N(\beta^TX,\sigma^2)">\(Y\mid X\sim
+N(\beta^TX,\sigma^2)\)</span> and response is MAR given <span class="math inline" data-tex="X">\(X\)</span>. For an unobserved outcome, an EM E
+step supplies </p><div class="math-block"><span class="math display" data-tex="E(Y\mid X)=\beta^TX,\qquad
+E(Y^2\mid X)=\sigma^2+(\beta^TX)^2.">\[E(Y\mid X)=\beta^TX,\qquad
+E(Y^2\mid X)=\sigma^2+(\beta^TX)^2.\]</span></div><p> A Bayesian or proper
+predictive-imputation step instead draws <span class="math inline" data-tex="(\beta,\sigma^2)">\((\beta,\sigma^2)\)</span> from its posterior and
+then draws <span class="math inline" data-tex="Y=\beta^TX+\sigma\varepsilon">\(Y=\beta^TX+\sigma\varepsilon\)</span> with <span class="math inline" data-tex="\varepsilon\sim N(0,1)">\(\varepsilon\sim N(0,1)\)</span>. The second moment
+in EM and the residual draw in simulation represent uncertainty in the
+unobserved outcome in different calculations. Drawing regression
+parameters supplies another layer of predictive uncertainty. This is why
+deterministic regression imputation followed by an ordinary
+complete-data standard error is not interchangeable with either
+procedure.</p></div>
+<p>A convenient imputation model need not equal the analysis model, but
+the two should preserve the features relevant to the target.
+Congeniality is not decided solely by comparing model names. For
+example, an imputation regression omitting an interaction central to the
+analysis can erase that interaction from the imputed records. Monotone
+patterns sometimes allow direct posterior draws from successive
+regressions; arbitrary patterns may require iteration. Computational
+convenience is one consideration alongside model adequacy.</p>
+<h2 id="section-3">7.3 Weighting and double
+robustness</h2>
+<p>The likelihood-based methods for MAR data basically ignore the
+missing data mechanism when making inference about a parameter from the
+sampling distribution <span class="math inline" data-tex="p_Y(y;\theta)">\(p_Y(y;\theta)\)</span>. On the contrary, the
+inverse probability weighting (IPW) uses information on the missingness
+mechanism to construct <span class="math inline" data-tex="M">\(M\)</span>
+estimators. This is in violation of the <span><em>Likelihood
+Principle</em></span>, which states that all information about a
+parameter is contained in its likelihood function and hence dictates
+that inference be the same for two models giving rise to the same
+likelihood (or proportional likelihoods). To see the violation, we use
+the old example where <span class="math inline" data-tex="Y=(X, Y_2)">\(Y=(X, Y_2)\)</span>,
+<span class="math inline" data-tex="Y_2">\(Y_2\)</span> is possibly missing, the
+parameter of interest is <span class="math inline" data-tex="\theta:=EY_2">\(\theta:=EY_2\)</span>, and the distribution of
+<span class="math inline" data-tex="Y">\(Y\)</span> is left nonparametric.</p>
+<div class="math-passage"><p>Write the selection probability function as </p><div class="math-block"><span class="math display" data-tex="\pi(X)=\operatorname{Pr}(R=1\mid Y),">\[\pi(X)=\operatorname{Pr}(R=1\mid Y),\]</span></div><p> and
+suppose we have two models with known selection probabilities <span class="math inline" data-tex="\pi=\pi_0, \pi_0^*">\(\pi=\pi_0, \pi_0^*\)</span>, respectively, where
+<span class="math inline" data-tex="\pi_0">\(\pi_0\)</span> and <span class="math inline" data-tex="\pi_0^*">\(\pi_0^*\)</span> are two known functions. Because
+of likelihood factorization under MAR, these two models have
+proportional likelihoods with regard to <span class="math inline" data-tex="\theta">\(\theta\)</span>. So by the Principle, inference
+should be the same. However, the IPW estimators for the two models are
+clearly different, as they are given by </p><div class="math-block"><span class="math display" data-tex="n^{-1}\sum_{i=1}^n\frac{R_i}{\pi_0(X_i)}Y_{2i}\mbox{
+and } n^{-1}\sum_{i=1}^n\frac{R_i}{\pi_0^*(X_i)}Y_{2i},">\[n^{-1}\sum_{i=1}^n\frac{R_i}{\pi_0(X_i)}Y_{2i}\mbox{
+and } n^{-1}\sum_{i=1}^n\frac{R_i}{\pi_0^*(X_i)}Y_{2i},\]</span></div><p>
+respectively.</p></div>
+<p>Robins and Ritov (1997) made a strong case in challenging the once
+axiomatic Principle from an angle of the <span><em>curse of
+dimensionality</em></span>. Their argument highlights how difficult
+outcome regression can be over broad high-dimensional model classes when
+observation probabilities are known. The following discussion is a
+qualitative explanation, not a universal finite-sample ordering of
+estimators. Any estimator that conforms to the Principle would
+inevitably estimate the function <span class="math inline" data-tex="\mu(X):=E[Y_2\mid X]">\(\mu(X):=E[Y_2\mid X]\)</span>. Because of the
+curse of dimensionality, however, nonparametric estimation of <span class="math inline" data-tex="\mu">\(\mu\)</span> is infeasible in small- to
+medium-sized samples when <span class="math inline" data-tex="X">\(X\)</span> is
+high-dimensional and contains multiple continuous components. On the
+other hand, IPW can exploit known selection probabilities without
+fitting a high-dimensional outcome model, provided its weights and
+moments are well behaved.</p>
+<p>The likelihood-principle discussion distinguishes likelihood evidence
+from repeated-sampling calibration under a known observation design. If
+two known selection functions multiply the data-model likelihood by
+different parameter-free factors, the likelihoods for the data-model
+parameter are proportional. An IPW procedure nevertheless uses the
+actual selection probabilities and may therefore return different
+estimates. The example illustrates a conceptual distinction; it does not
+assert that every likelihood-based estimator performs badly or that
+every IPW estimator performs well in finite samples.</p>
+<p>High-dimensional outcome regression can be difficult without
+smoothness, sparsity, or other structure. Known, well-behaved sampling
+probabilities permit an unbiased weighted mean without estimating that
+outcome regression. Conversely, extreme weights may make the mean highly
+variable. Which method is useful depends on available structure and
+information. Double robustness provides a consistency guarantee under a
+union of models; efficiency gains require further conditions, especially
+adequate nuisance estimation and positivity.</p>
+<p>Known observation probabilities can make weighting particularly
+useful in a study with missingness by design, especially when the full
+joint distribution is difficult to model. Related weighting
+constructions also support marginal causal analyses under the requisite
+treatment and confounding assumptions (Robins et al., 2000; Hernán et
+al., 2001). Augmentation adds outcome-model information, providing a
+second route to consistency and potential efficiency gains when the
+nuisance functions are suitably estimated. The binary-response and
+monotone-dropout cases developed here provide the basic examples.
+Nonmonotone MAR and NMAR require further identification and modeling
+arguments, several of which are represented in the reading list at the
+end of the chapter.</p>
+<h3 id="putting-the-methods-side-by-side">Putting the methods side by
+side</h3>
+<div class="math-passage"><p>For the running mean example, the three basic estimates are </p><div class="math-block"><span class="math display" data-tex="\begin{gathered}\widehat\theta_{\mathrm{OR}}=P_n\widehat
+m(X)\\[6pt]
+\widehat\theta_{\mathrm{IPW}}=P_n\frac{RY}{\widehat\pi(X)}\\[6pt]
+\widehat\theta_{\mathrm{DR}}=P_n\left[\widehat m(X)+\frac
+R{\widehat\pi(X)}\{Y-\widehat m(X)\}\right].\end{gathered}">\[\begin{gathered}\widehat\theta_{\mathrm{OR}}=P_n\widehat
+m(X)\\[6pt]
+\widehat\theta_{\mathrm{IPW}}=P_n\frac{RY}{\widehat\pi(X)}\\[6pt]
+\widehat\theta_{\mathrm{DR}}=P_n\left[\widehat m(X)+\frac
+R{\widehat\pi(X)}\{Y-\widehat m(X)\}\right].\end{gathered}\]</span></div><p> The
+first depends on a suitable outcome regression, the second on a suitable
+observation model, and the third is consistent if either is correct
+under the conditions established in Chapter 6. All three here rely on
+MAR identification. Double robustness is not a substitute for a
+sensitivity analysis about unobserved drivers of missingness.</p></div>
+<p>An analysis can now be planned in a reproducible sequence. State the
+target population and parameter. Record the full-data variables,
+observed patterns, and timing of measurements. Explain the missingness
+and positivity assumptions. Choose and justify the outcome, covariate,
+and observation models actually required by the method. Implement the
+associated computation and inspect convergence or numerical stability.
+Calculate uncertainty including nuisance fitting, missing-value
+uncertainty, and any material simulation error. Finally, assess how
+substantive conclusions change under plausible alternative identifying
+assumptions.</p>
+<h3 id="questions-for-synthesis">Questions for synthesis</h3>
+<p>Explain why MAR can invalidate a complete-case mean while preserving
+a correctly specified conditional response regression. Derive the normal
+example’s second conditional moment and compare it with the square of
+its first moment. Show how the DR bias identity becomes a product of two
+nuisance errors. For monotone dropout, explain why a subject observed
+only through an intermediate visit contributes to sequential
+augmentation. For a nonidentified selection model, describe what
+additional information would distinguish identification from merely
+choosing one numerical optimizer solution.</p>
+<h2 id="section-4">7.4 Further reading</h2>
+<p>The following reading list records the directions highlighted in the
+original lectures. Its dates and descriptions belong to that historical
+course context; it is not an exhaustive account of subsequent research.
+Nonmonotone patterns, shadow variables, instrumental variables, multiple
+robustness, and causal inference each change the identifying information
+or the structure of the estimating equations. They extend the course’s
+questions rather than bypassing the need to state assumptions.</p>
+<p><span><strong>Non-monotone missingness</strong></span>: Sun and
+Tchetgen Tchetgen (2017; IPW for non-monotone MAR):
+<span><strong>NMAR</strong></span>: Miao, W. and Tchetgen Tchetgen
+(2017; shadow variable for NMAR) Sun et al. (2016; instrumental
+variables for NMAR) <span><strong>Multiple robustness</strong></span>:
+Han and Wang (2013; basic theory) Han (2016; multiple robustness in
+longitudinal data) <span><strong>Causal inference</strong></span>:
+Hernán and Robins (2017) <span><em>Causal inference</em></span>. Imbens
+and Rubin (2015) <span><em>Causal inference in statistics, social, and
+biomedical sciences.</em></span> van der Laan and Rose (2011).
+<span><em>Targeted learning: causal inference for observational and
+experimental data</em></span>. Pearl (2009)
+<span><em>Causality</em></span>.</p>
+<h2 id="section-5">7.5 References</h2>
+<p>Han, P. (2016). Intrinsic efficiency and multiple robustness in
+longitudinal studies with drop-out. Biometrika.</p>
+<p>Han, P. &amp; Wang, L. (2013). Estimation with missing data: beyond
+double robustness. Biometrika.</p>
+<p>Hernán, M. A., Brumback, B., &amp; Robins, J. M. (2001). Marginal
+structural models to estimate the joint causal effect of nonrandomized
+treatments. Journal of the American Statistical Association, 96,
+440-448.</p>
+<p>Hernán MA, Robins JM (2017). Causal Inference. Boca Raton: Chapman
+&amp; Hall/CRC, forthcoming.</p>
+<p>Imbens, G. W. &amp; Rubin, D. B. (2015). Causal Inference in
+Statistics, Social, and Biomedical Sciences. Cambridge University
+Press.</p>
+<p>Pearl, J. (2009). Causality. Cambridge University Press.</p>
+<p>Miao, W. &amp; Tchetgen, E. J. T. (2017). On varieties of doubly
+robust estimators under missingness not at random with a shadow
+variable. Biometrika.</p>
+<p>Robins, J. M., Hernán, M. A., &amp; Brumback, B. (2000). Marginal
+structural models and causal inference in epidemiology.</p>
+<p>Sun, B., Liu, L., Miao, W., Wirth, K., Robins, J., &amp; Tchetgen, E.
+T. (2016). Semiparametric Estimation with Data Missing Not at Random
+Using an Instrumental Variable. arXiv preprint arXiv:1607.03197.</p>
+<p>Sun, B. &amp; Tchetgen Tchetgen, E. J. (2017). On Inverse Probability
+Weighting for Nonmonotone Missing at Random Data. Journal of the
+American Statistical Association, In press.</p>
+<p>van der Laan, M. J. &amp; Rose, S. (2011). Targeted Learning: Causal
+Inference for Observational and Experimental Data. Springer Science
+&amp; Business Media.</p>
+</article><nav aria-label="Adjacent chapters" class="page-turn"><a href="chapter-6.html">← Previous chapter</a><a href="index.html">Course overview →</a></nav><section aria-labelledby="comments-title" class="comments" id="comments"><p class="eyebrow">DISCUSSION</p><h2 id="comments-title">Comments and questions</h2><p>Share questions, corrections, and suggestions about this chapter or the book.</p><div aria-live="polite" id="giscus-comments"></div></section><footer><span>Missing Data: Foundations and Methods</span><nav aria-label="Course resources"><a href="index.html">Course overview</a><a href="index.html#chapters">Lecture slides</a></nav></footer></main><aside class="on-page"><p class="nav-label">IN THIS CHAPTER</p><a href="#section-1">7.1 The assumptions behind
+identification</a><a href="#section-2">7.2 Comparing likelihood-based
+methods</a><a href="#section-3">7.3 Weighting and double
+robustness</a><a href="#section-4">7.4 Further reading</a><a href="#section-5">7.5 References</a></aside></div></body></html>
