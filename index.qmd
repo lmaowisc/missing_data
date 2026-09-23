@@ -28,7 +28,7 @@ Statistical inference when the data we observe are only part of the story.
 
 ## About the course
 
-Originally taught in 2018, this course is intended for graduate students in statistics and biostatistics with a foundation in mathematical statistics. Familiarity with asymptotic theory and statistical programming is helpful.
+Originally taught in 2017, this course is intended for graduate students in statistics and biostatistics with a foundation in mathematical statistics. Familiarity with asymptotic theory and statistical programming is helpful.
 
 :::
 
