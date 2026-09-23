@@ -10,10 +10,10 @@
   };
   const container = document.getElementById('giscus-comments');
   if (!container) return;
-  if (!config.repoId || !config.categoryId) {
-    container.innerHTML = '<p>Comments will be available here once the public discussion forum is activated.</p>';
-    return;
-  }
+    if (!config.repoId || !config.categoryId) {
+      container.innerHTML = '<p><a href="https://github.com/lmaowisc/missing_data/discussions" target="_blank" rel="noopener noreferrer">Open the discussion forum</a> to post a question, correction, or suggestion.</p>';
+      return;
+    }
   const script = document.createElement('script');
   script.src = 'https://giscus.app/client.js';
   script.async = true;
