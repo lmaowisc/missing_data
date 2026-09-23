@@ -952,7 +952,7 @@ $$
 Though $Z_2$ is count data, an exploratory analysis shows that $Z_2$ is a mixture of smokers and nonsmokers, and thus the Poisson is inadequate.
 
 ::::: book-figure
-![Bar plot for \\(Z_2\\) in the Six-Cities data.](figures/sc_z2.png)
+<img alt="Bar plot for \(Z_2\) in the Six-Cities data." src="figures/sc_z2.png"/>
 
 ::: {#fig:sc_z2}
 :::

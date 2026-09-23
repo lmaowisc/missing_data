@@ -3,3 +3,9 @@ Thumbs.db
 _site/
 __pycache__/
 .venv/
+.quarto/
+.Rproj.user/
+.Rhistory
+.RData
+
+/.quarto/

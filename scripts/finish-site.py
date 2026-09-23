@@ -1,23 +1,23 @@
-"""Build the public site from manuscript/*.md using Quarto's bundled Pandoc."""
+"""Apply the established site design after native Quarto rendering."""
 from pathlib import Path
 from urllib.parse import urlsplit, unquote
 import argparse
 import html
 import json
-import shutil
-import subprocess
 from bs4 import BeautifulSoup
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / '_site'
 ESC = html.escape
 
 def render(source):
-    result = subprocess.run(
-        ['quarto', 'pandoc', str(ROOT / source), '--from=markdown+fenced_divs+bracketed_spans+tex_math_dollars-implicit_figures',
-         '--to=html5', '--mathjax', '--wrap=none'],
-        capture_output=True, text=True, encoding='utf-8', check=True)
-    return BeautifulSoup(result.stdout, 'html.parser')
+    page = OUT / (Path(source).stem + '.html')
+    soup = BeautifulSoup(page.read_text(encoding='utf-8'), 'html.parser')
+    manuscript = soup.select_one('#quarto-manuscript')
+    if manuscript is None:
+        raise ValueError(f'{page.name} was not freshly rendered by Quarto')
+    return BeautifulSoup(manuscript.decode_contents(), 'html.parser')
+
 
 def verify():
     errors = []
@@ -45,14 +45,14 @@ def build():
     book = json.loads((ROOT / 'book.json').read_text(encoding='utf-8'))
     chapters = book['chapters']
     OUT.mkdir(exist_ok=True)
-    # Copy only public assets, never manuscripts, build tools, or Git metadata.
-    for name in ('figures', 'slides', 'vendor'):
-        shutil.copytree(ROOT / name, OUT / name, dirs_exist_ok=True)
-    for name in ('style.css', 'favicon.svg', 'math-config.js', 'comments.js', '.nojekyll'):
-        shutil.copy2(ROOT / name, OUT / name)
+    # Quarto copies the explicit public resources declared in _quarto.yml.
+    (OUT / '.nojekyll').touch()
     shell = (ROOT / 'templates/page.html').read_text(encoding='utf-8')
     footer = (ROOT / 'templates/footer.html').read_text(encoding='utf-8')
     for number in range(len(chapters) + 1):
+        output = OUT / (f'chapter-{number}.html' if number else 'index.html')
+        if not output.exists() or 'id="quarto-manuscript"' not in output.read_text(encoding='utf-8'):
+            continue  # Quarto preview may render only the edited page.
         nav = ''.join(f'<a class="chapter-link{" active" if number == c["number"] else ""}" '
                       f'href="chapter-{c["number"]}.html"'
                       + (' aria-current="page"' if number == c['number'] else '')
@@ -71,7 +71,7 @@ def build():
             content += f'<nav class="page-turn" aria-label="Adjacent chapters">{previous}{following}</nav>'
             title, filename = c['title'], f'chapter-{number}.html'
         else:
-            body = render('manuscript/index.md')
+            body = render('index.qmd')
             # Keep the original front-page elements while authoring their text in Markdown.
             for selector in ('.affiliation', '.lead', '.intro'):
                 wrapper = body.select_one(selector)
@@ -87,7 +87,7 @@ def build():
             listing = f'<section id="chapters"><div class="section-heading"><h2>Chapters &amp; lecture slides</h2><span>01 — {len(chapters):02}</span></div>{rows}</section>'
             placeholder = body.select_one('#chapter-list-placeholder')
             if placeholder is None:
-                raise ValueError('Keep the chapter-list-placeholder marker in manuscript/index.md')
+                raise ValueError('Keep the chapter-list-placeholder marker in index.qmd')
             placeholder.replace_with(BeautifulSoup(listing, 'html.parser'))
             content = str(body)
             toc = '<p class="nav-label">ON THIS PAGE</p><a href="#chapters">Chapters &amp; slides</a>'
@@ -125,7 +125,9 @@ def build():
                 link['rel'] = list(dict.fromkeys([*link.get('rel', []), 'noopener', 'noreferrer']))
         (OUT / filename).write_text(str(soup), encoding='utf-8')
         print(f'Built {filename}')
-    verify()
+    # Single-file previews can precede the first complete project render.
+    if all((OUT / f'chapter-{i}.html').exists() for i in range(1, len(chapters) + 1)):
+        verify()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)

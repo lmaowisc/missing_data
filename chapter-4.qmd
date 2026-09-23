@@ -337,7 +337,7 @@ In the mouse study the event of interest is tumor onset, while the examination o
 Consider an example from a tumorigenicity study described in Hoel and Walburg (1972). One hundred and forty-four RFM mice were assigned to either a germ-free or a conventional environment, and were sacrificed after several years to detect the presence of lung tumor. The purpose of this study is to compare the time from beginning of the study until the time to observe a tumor. Since lung tumors are nonlethal and cannot be observed before death in RFM mice, it is appropriate to treat this data as current status data. We use the EM algorithm to estimate the survival functions for the two groups of mice separately.
 
 ::::: book-figure
-![Nonparametric maximum likelihood estimates for the survival functions for tumor occurence in mice. Solid: germ-free; dotted: conventional.](figures/c_status.png)
+<img alt="Nonparametric maximum likelihood estimates for the survival functions for tumor occurence in mice. Solid: germ-free; dotted: conventional." src="figures/c_status.png"/>
 
 ::: {#fig:c_status}
 :::

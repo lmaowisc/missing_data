@@ -92,7 +92,7 @@ A phenotype is an observable characteristic, while a genotype describes the alle
 Different genotypes may lead to the same phenotype, so there is a coarsening of information from genotype to phenotype. A simple and classic example of single-gene-controlled phenotypes is human blood type. The locus controlling blood type resides on chromosome 9 at band q34, and it controls blood type by determining the antigens on the surface of the red blood cells. There are three alleles, A, B, and O, which are responsible for generating antigen A, antigen B, and no antigen, respectively. So, alleles A and B are "co-dominant" and O is "recessive" (see Figure [2.1](#fig:bt)), giving rise to four blood types A, B, AB, and O.
 
 ::::: book-figure
-![Genotypes and corresponding phenotypes of ABO gene.](figures/bloodtype.png)
+<img alt="Genotypes and corresponding phenotypes of ABO gene." src="figures/bloodtype.png"/>
 
 ::: {#fig:bt}
 :::
@@ -1000,7 +1000,7 @@ formula.</caption>
 Est and SE are the empirical means and standard error of the parameter estimator; SEE is the empirical average of the standard error estimator; CP is the empirical coverage probability of the 95% confidence interval. Each entry is based on 2,000 replicates.
 
 ::::: book-figure
-![Estimates of ABO allele frequencies in the duodenal ulter data (Clarke et al., 1959) and their 95% confidence intervals produced by the Louis formula.](figures/allele_freq.png)
+<img alt="Estimates of ABO allele frequencies in the duodenal ulter data (Clarke et al., 1959) and their 95% confidence intervals produced by the Louis formula." src="figures/allele_freq.png"/>
 
 ::: {#fig:allele}
 :::

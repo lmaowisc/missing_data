@@ -54,7 +54,7 @@ Maximum likelihood, Bayesian analysis, and multiple imputation all connect infer
 Replacing missing entries by single estimated values does not generally meet that requirement. The conditional distribution of the missing values depends on the full-data model and its unknown parameters, while estimation of those parameters depends on the information available about the missing values. These two dependencies form the loop illustrated below. A sound method resolves it by taking conditional expectations or by sampling from conditional distributions, rather than treating one chosen completion as if it were the original dataset. EM and data augmentation implement these alternatives for different inferential targets.
 
 :::: book-figure
-![The triad of missing data, observed data, and parameter. Red arrow: imputing the missing data depends on the observed data and the parameter; blue arrow: estimating/drawing the parameter depends on the full data, i.e., observed and missing data.](figures/review0.png)
+<img alt="The triad of missing data, observed data, and parameter. Red arrow: imputing the missing data depends on the observed data and the parameter; blue arrow: estimating/drawing the parameter depends on the full data, i.e., observed and missing data." src="figures/review0.png"/>
 
 ::: figure-caption
 The triad of missing data, observed data, and parameter. Red arrow: imputing the missing data depends on the observed data and the parameter; blue arrow: estimating/drawing the parameter depends on the full data, i.e., observed and missing data.
@@ -64,7 +64,7 @@ The triad of missing data, observed data, and parameter. Red arrow: imputing the
 EM resolves the loop through conditional expectations and optimization. In the E step, the current parameter determines the distribution of the missing data given the observations; averaging the complete-data log likelihood under that distribution produces the $Q$ function. In the M step, the candidate parameter is varied to maximize $Q$. The red and blue arrows in the next figure represent these two operations. They act on a function of the missing values, so every moment required by that function must be retained. This is why an expected quadratic term cannot generally be replaced by the square of an expected missing value.
 
 :::: book-figure
-![The EM solution to the "three-body" problem. Missing values, according to how their appear in the full-data log-likelihood, are replaced by their conditional expectations given observed data and current iterate of the parameter in the E step; the next iterate of parameter is derived based on the "imputed" full-data log-likelihood (the \\(Q\\) function) in the M step.](figures/review1.png)
+<img alt="The EM solution to the “three-body” problem. Missing values, according to how their appear in the full-data log-likelihood, are replaced by their conditional expectations given observed data and current iterate of the parameter in the E step; the next iterate of parameter is derived based on the “imputed” full-data log-likelihood (the \(Q\) function) in the M step." src="figures/review1.png"/>
 
 ::: figure-caption
 The EM solution to the "three-body" problem. Missing values, according to how their appear in the full-data log-likelihood, are replaced by their conditional expectations given observed data and current iterate of the parameter in the E step; the next iterate of parameter is derived based on the "imputed" full-data log-likelihood (the $Q$ function) in the M step.
@@ -110,7 +110,7 @@ D_{\mathrm{obs}}]$. The latter can be combined with the unchanged observed value
 :::::
 
 :::: book-figure
-![The Gibbs sampler solution to the "three-body" problem. GS A: \\(\[D\_{\\mathrm{mis}}\\mid D\_{\\mathrm{obs}};\\theta\]\\) ; GS B: \\(\[\\theta\\mid D\_{\\mathrm{obs}}, D\_{\\mathrm{mis}}\]\\) .](figures/review2.png)
+<img alt="The Gibbs sampler solution to the “three-body” problem. GS A: \([D_{\mathrm{mis}}\mid D_{\mathrm{obs}};\theta]\) ; GS B: \([\theta\mid D_{\mathrm{obs}}, D_{\mathrm{mis}}]\) ." src="figures/review2.png"/>
 
 ::: figure-caption
 The Gibbs sampler solution to the "three-body" problem. GS A: $[D_{\mathrm{mis}}\mid
@@ -126,7 +126,7 @@ Sometimes the simulation can be organized without a long alternating loop. A con
 D_{\mathrm{mis}}$ is then separated from the analysis map $(D_{\mathrm{obs}},D_{\mathrm{mis}})\mapsto\theta$. The monotone normal-regression construction in Chapter 5 illustrates this arrangement. It does not require the imputation and analysis models to be written identically, but their relationship still matters for validity; computational convenience alone does not establish congeniality.
 
 :::: book-figure
-![Break out of the "three-body" system by using a convenient (uncongenial) imputation model, where model parameters can be easily estimated based on observed data and the posterior predictive distributions have closed forms.](figures/review3.png)
+<img alt="Break out of the “three-body” system by using a convenient (uncongenial) imputation model, where model parameters can be easily estimated based on observed data and the posterior predictive distributions have closed forms." src="figures/review3.png"/>
 
 ::: figure-caption
 Break out of the "three-body" system by using a convenient (uncongenial) imputation model, where model parameters can be easily estimated based on observed data and the posterior predictive distributions have closed forms.

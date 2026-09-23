@@ -1,0 +1,41 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - index.qmd
+    - chapter-*.qmd
+  resources:
+    - style.css
+    - favicon.svg
+    - math-config.js
+    - comments.js
+    - figures/**
+    - slides/**
+    - vendor/**
+  post-render:
+    - python scripts/finish-site.py
+
+website:
+  title: "Missing Data: Foundations and Methods"
+  search: false
+
+format:
+  html:
+    theme: none
+    minimal: true
+    template: templates/quarto.html
+    toc: false
+    number-sections: false
+    anchor-sections: false
+    section-divs: false
+    html-math-method: mathjax
+    code-copy: false
+    code-fold: false
+    fig-cap-location: bottom
+    citations-hover: false
+    footnotes-hover: false
+
+from: markdown+fenced_divs+bracketed_spans+tex_math_dollars-implicit_figures
+execute:
+  enabled: false
+editor: source
