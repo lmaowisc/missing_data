@@ -24,21 +24,21 @@ Statistical inference when the data we observe are only part of the story.
 :::
 
 ::::: {.section .course-note}
-<div>
+::: course-note-column
 
 ## About the course
 
 For graduate students in statistics and biostatistics with a foundation in mathematical statistics. Familiarity with asymptotic theory and statistical programming is helpful.
 
-</div>
+:::
 
-<div>
+::: course-note-column
 
-## Two connected perspectives
+## A common thread
 
-Begin with missingness and identifiability, develop likelihood-based methods through EM and imputation, then turn to weighting and doubly robust estimating equations.
+How can standard complete-data methods be adapted when some observations are missing? We connect likelihood-based methods, including EM and imputation, with semiparametric methods based on weighting and augmented estimating equations. Throughout, assumptions about missingness determine what can be learned, and valid inference must account for the information lost through missing data.
 
-</div>
+:::
 :::::
 
 ::: {#chapter-list-placeholder}

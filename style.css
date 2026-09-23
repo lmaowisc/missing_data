@@ -130,9 +130,6 @@ main > section > p { font: 18px/1.8 Georgia, serif; color: var(--ink); }
   main { padding: 40px 36px; }
   .sidebar { padding-left: 14px; padding-right: 14px; }
 }
-@media (max-width: 1000px) {
-  .course-note { grid-template-columns: 1fr; gap: 22px; }
-}
 @media (max-width: 760px) {
   header { padding: 18px 22px; }
   .brand { font-size: 23px; }
