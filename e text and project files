@@ -1,0 +1,22 @@
+[1mdiff --git a/index.qmd b/index.qmd[m
+[1mindex 42afbff..cbe2d00 100644[m
+[1m--- a/index.qmd[m
+[1m+++ b/index.qmd[m
+[36m@@ -28,7 +28,7 @@[m [mStatistical inference when the data we observe are only part of the story.[m
+ [m
+ ## About the course[m
+ [m
+[31m-For graduate students in statistics and biostatistics with a foundation in mathematical statistics. Familiarity with asymptotic theory and statistical programming is helpful.[m
+[32m+[m[32mOriginally taught in 2018, this course is intended for graduate students in statistics and biostatistics with a foundation in mathematical statistics. Familiarity with asymptotic theory and statistical programming is helpful.[m
+ [m
+ :::[m
+ [m
+[36m@@ -36,7 +36,7 @@[m [mFor graduate students in statistics and biostatistics with a foundation in mathe[m
+ [m
+ ## A common thread[m
+ [m
+[31m-How can standard complete-data methods be adapted when some observations are missing? We connect likelihood-based methods, including EM and imputation, with semiparametric methods based on weighting and augmented estimating equations. Throughout, assumptions about missingness determine what can be learned, and valid inference must account for the information lost through missing data.[m
+[32m+[m[32mThe course explores how standard complete-data methods can be adapted to missing data. Beginning with missingness mechanisms and identifiability, it connects likelihood-based methods, including EM and imputation, with semiparametric methods based on weighting and doubly robust estimating equations.[m
+ [m
+ :::[m
+ :::::[m
